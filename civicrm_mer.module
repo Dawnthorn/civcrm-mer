@@ -27,7 +27,7 @@ function civicrm_mer_civicrm_pageRun( &$page ) {
     else {
       $register_url = CRM_Utils_System::url( 'civicrm/event/add_to_cart', "id={$event_id}&reset=1", true, null, true, true );
     }
-    $page->assign( 'registerURL', $register_url );
+#    $page->assign( 'registerURL', $register_url );
   }
 }
 
