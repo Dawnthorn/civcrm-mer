@@ -1,0 +1,42 @@
+-- /*******************************************************
+-- *
+-- * civicrm_event_carts
+-- *
+-- *******************************************************/
+CREATE TABLE civicrm_event_carts (
+
+
+     id int unsigned NOT NULL AUTO_INCREMENT  COMMENT 'Cart Id',
+     user_id int unsigned    COMMENT 'FK to civicrm_contact who created this
+cart'
+,
+    PRIMARY KEY ( id )
+
+
+,
+     CONSTRAINT FK_civicrm_event_carts_user_id FOREIGN KEY (user_id)
+REFERENCES civicrm_contact(id) ON DELETE SET NULL
+)  ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci  ;
+
+-- /*******************************************************
+-- *
+-- * civicrm_events_in_carts
+-- *
+-- *******************************************************/
+CREATE TABLE civicrm_events_in_carts (
+
+
+     id int unsigned NOT NULL AUTO_INCREMENT  COMMENT 'Event In Cart Id',
+     event_id int unsigned    COMMENT 'FK to Event ID',
+     event_cart_id int unsigned    COMMENT 'FK to Event Cart ID'
+,
+    PRIMARY KEY ( id )
+
+
+,
+     CONSTRAINT FK_civicrm_events_in_carts_event_id FOREIGN KEY (event_id)
+REFERENCES civicrm_event(id) ON DELETE CASCADE,
+     CONSTRAINT FK_civicrm_events_in_carts_event_cart_id FOREIGN KEY
+(event_cart_id) REFERENCES civicrm_event_carts(id) ON DELETE CASCADE
+)  ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci  ;
+

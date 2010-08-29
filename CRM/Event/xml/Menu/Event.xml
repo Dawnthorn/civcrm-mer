@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<menu>
+  <item>
+    <path>civicrm/event/add_to_cart</path>
+    <title>Add Event To Cart</title>
+    <page_callback>CRM_Event_Page_AddToCart</page_callback>
+    <access_callback>1</access_callback>
+    <is_public>true</is_public>
+    <is_ssl>true</is_ssl>
+  </item>
+</menu>

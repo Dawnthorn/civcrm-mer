@@ -1,0 +1,51 @@
+<?
+
+function civicrm_mer_civicrm_config( &$config ) {
+  $civicrm_mer_dir_path = dirname( __FILE__ );
+  set_include_path( $civicrm_mer_dir_path . PATH_SEPARATOR .  get_include_path() );
+  $civicrm_mer_template_dir_path = civicrm_mer_paths_join($civicrm_mer_dir_path, 'templates');
+  $template =& CRM_Core_Smarty::singleton();
+  if (is_array($template->template_dir)) 
+  {
+    array_push( $template->template_dir, $civicrm_mer_template_dir_path );
+  }
+  else 
+  {
+    $template->template_dir = array($civicrm_mer_template_dir_path, $template->template_dir);
+  }
+}
+
+function civicrm_mer_civicrm_pageRun( &$page ) {
+  $template = $page->getTemplate( );
+  $register_url = $template->get_template_vars( 'registerURL' );
+  if ( !is_null( $register_url ) ) {
+    $action  = CRM_Utils_Request::retrieve( 'action', 'String', $page, false );
+    $event_id = CRM_Utils_Request::retrieve( 'id', 'Positive', $page, true );
+    if ( $action == CRM_Core_Action::PREVIEW ) {
+      $register_url = CRM_Utils_System::url( 'civicrm/event/add_to_cart', "id={$event_id}&reset=1&action=preview", true, null, true, true );
+    }
+    else {
+      $register_url = CRM_Utils_System::url( 'civicrm/event/add_to_cart', "id={$event_id}&reset=1", true, null, true, true );
+    }
+    $page->assign( 'registerURL', $register_url );
+  }
+}
+
+function civicrm_mer_civicrm_xmlMenu( &$files ) {
+  $menu_files_path = civicrm_mer_paths_join( getcwd( ), drupal_get_path( 'module', 'civicrm_mer' ), "CRM", "Event", "xml", "Menu" );
+  $menu_files_paths = CRM_Utils_File::getFilesByExtension( $menu_files_path, "xml" );
+  $files = array_merge( $files, $menu_files_paths );
+  return $files;
+}
+
+
+function civicrm_mer_paths_join( ) {
+  return join( DIRECTORY_SEPARATOR, func_get_args( ) );
+}
+
+function civicrm_mer_perm ( ) {
+  return null;
+}
+
+
+?>

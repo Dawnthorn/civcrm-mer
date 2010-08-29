@@ -1,0 +1,14 @@
+<?php
+
+function civicrm_mer_install()
+{
+  $civicrm_path = join( DIRECTORY_SEPARATOR, array( drupal_get_path('module', 'civicrm' ), '..' ) );
+  set_include_path( $civicrm_path . PATH_SEPARATOR . get_include_path( ) );
+  civicrm_initialize();
+  require_once 'CRM/Utils/File.php';
+  $config = CRM_Core_Config::singleton( );
+  $file_path = join(DIRECTORY_SEPARATOR, array( dirname( __FILE__ ), 'sql', '0.1.mysql' ) );
+  CRM_Utils_File::sourceSQLFile( $config->dsn, $file_path, null, false );
+}
+
+?>

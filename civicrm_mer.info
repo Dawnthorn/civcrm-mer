@@ -1,0 +1,6 @@
+name = CiviCRM Multiple Event Registration
+description = Adds multiple event registration to CiviEvents
+dependencies[] = civicrm
+package = CiviCRM Multiple Event Registration
+core = 6.x
+version = 0.1
