@@ -38,7 +38,6 @@ function civicrm_mer_civicrm_xmlMenu( &$files ) {
   return $files;
 }
 
-
 function civicrm_mer_paths_join( ) {
   return join( DIRECTORY_SEPARATOR, func_get_args( ) );
 }

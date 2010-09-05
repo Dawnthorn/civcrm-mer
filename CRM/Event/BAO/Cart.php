@@ -1,9 +1,13 @@
 <?php
 
 require_once 'CRM/Event/DAO/Cart.php';
+require_once 'CRM/Event/BAO/EventInCart.php';
 
 class CRM_Event_BAO_Cart extends CRM_Event_DAO_Cart
 {
+  public $associations_loaded = false;
+  public $events_in_carts = array();
+
   function __construct( )
   {
     parent::__construct( );
@@ -11,10 +15,27 @@ class CRM_Event_BAO_Cart extends CRM_Event_DAO_Cart
 
   public static function add( &$params )
   {
-    $cart = new CRM_Event_DAO_Cart( );
+    $cart = new CRM_Event_BAO_Cart( );
     $cart->copyValues( $params );
     $result = $cart->save( );
     return $result;
+  }
+
+  public function add_event( $event_id )
+  {
+    $this->load_associations();
+    foreach ( $this->events_in_carts as $event_in_cart ) {
+      if ( $event_in_cart->event_id == $event_id ) {
+	return;
+      }
+    }
+
+    $params = array(
+      'event_id' => $event_id, 
+      'event_cart_id' => $this->id 
+    );
+    $event_in_cart = CRM_Event_BAO_EventInCart::create( $params );
+    array_push($this->events_in_carts, $event_in_cart);
   }
 
   public static function create( $params )
@@ -41,7 +62,7 @@ class CRM_Event_BAO_Cart extends CRM_Event_DAO_Cart
 
   public static function find_by_params( $params )
   {
-    $cart = new CRM_Event_DAO_Cart( );
+    $cart = new CRM_Event_BAO_Cart( );
     $cart->copyValues( $params );
     if ( $cart->find( true ) ) {
       return $cart;
@@ -77,6 +98,25 @@ class CRM_Event_BAO_Cart extends CRM_Event_DAO_Cart
       }
     }
     return $cart;
+  }
+
+  public function load_associations( )
+  {
+    if ( $this->associations_loaded ) {
+      return;
+    }
+    $this->associations_loaded = true;
+    $this->events_in_carts = CRM_Event_BAO_EventInCart::find_all_by_event_cart_id( $this->id );
+    foreach ( $this->events_in_carts as $event_in_cart ) {
+      $event_in_cart->load_associations($this);
+    }
+  }
+
+  public function remove_event_in_cart( $event_in_cart_id ) {
+    $event_in_cart = CRM_Event_BAO_EventInCart::find_by_id( $event_in_cart_id );
+    $event_in_cart->load_associations( );
+    $event_in_cart->delete( );
+    return $event_in_cart;
   }
 
   public static function retrieve( &$params, &$values )
