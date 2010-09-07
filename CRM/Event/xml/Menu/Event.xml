@@ -9,6 +9,14 @@
     <is_ssl>false</is_ssl>
   </item>
   <item>
+    <path>civicrm/event/cart_checkout</path>
+    <title>Cart Checkout</title>
+    <page_callback>CRM_Event_Controller_Checkout</page_callback>
+    <access_callback>1</access_callback>
+    <is_public>true</is_public>
+    <is_ssl>true</is_ssl>
+  </item>
+  <item>
     <path>civicrm/event/remove_from_cart</path>
     <title>Remove From Cart</title>
     <page_callback>CRM_Event_Page_RemoveFromCart</page_callback>
