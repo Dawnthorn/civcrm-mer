@@ -13,6 +13,7 @@ class CRM_Event_Form_Checkout_Participants extends CRM_Event_Form_Checkout
       $participant->load_fields( $this );
     }
     $this->assign( 'participants', $this->participants );
+    $this->assign( 'contact', $this->contact );
 
     $buttons = array( );
     $buttons[] = array(

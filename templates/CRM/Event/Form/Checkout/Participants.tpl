@@ -18,8 +18,21 @@
 <script type="text/javascript">
 //<![CDATA[
 function add_participant( ) {
-  var index = $('.participant').length;
-  $.get("/civicrm/ajax/event/add_participant_to_cart?index=" + index, 
+  var max_index = 0;
+  var matcher = /participant_(\d+)/;
+  
+  $('.participant').each(
+    function(index) {
+      matches = matcher.exec($(this).attr('id'));
+      index = parseInt(matches[1]);
+      if (index > max_index)
+      {
+	max_index = index;
+      }
+    }
+  );
+
+  $.get("/civicrm/ajax/event/add_participant_to_cart?index=" + (max_index + 1), 
     function(data) {
       $('#participants').append(data);
     }

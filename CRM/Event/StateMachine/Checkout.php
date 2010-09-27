@@ -29,6 +29,7 @@ class CRM_Event_StateMachine_Checkout extends CRM_Core_StateMachine
     if ($is_monetary) {
       $pages["CRM_Event_Form_Checkout_Payment"] = null;
     }
+    $pages["CRM_Event_Form_Checkout_ThankYou"] = null;
     $this->addSequentialPages( $pages, $action );
   }
 }
