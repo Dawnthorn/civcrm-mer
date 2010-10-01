@@ -1,5 +1,7 @@
 <?php
 
+require_once drupal_get_path('module', 'civicrm') . '/modules/views/civicrm/civicrm_handler_field_event_link.inc';
+
 class civicrm_mer_handler_field_event_link extends civicrm_handler_field_event_link {
   function render($values) {
     $data = check_plain($values->{$this->field_alias});
