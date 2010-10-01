@@ -18,4 +18,4 @@
     {/foreach}
   </tbody>
 </table>
-
+<a href="{$checkout_url}">Checkout</a>
