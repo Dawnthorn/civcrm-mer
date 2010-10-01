@@ -46,5 +46,11 @@ function civicrm_mer_perm ( ) {
   return null;
 }
 
+function civicrm_mer_views_api() {
+  return array(
+    'api' => 2,
+  );
+}
+
 
 ?>
