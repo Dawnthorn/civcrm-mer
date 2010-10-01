@@ -34,7 +34,7 @@ class CRM_Event_Form_Checkout_Prices extends CRM_Event_Form_Checkout
 	$index = -1;
 	foreach ( $price_set['fields'] as $field ) {
 	  $index++;
-	  $field_name = "price_{$field['id']}";
+	  $field_name = "event_{$event_in_cart->event_id}_price_{$field['id']}";
 	  CRM_Price_BAO_Field::addQuickFormElement( $this, $field_name, $field['id'], false, true );
 	  $this->price_fields_for_event[$event_in_cart->event_id][] = $field_name;
 	}

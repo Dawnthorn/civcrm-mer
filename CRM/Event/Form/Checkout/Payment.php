@@ -136,11 +136,17 @@ WHERE  v.option_group_id = g.id
 	CRM_Core_OptionGroup::getAssoc( "civicrm_event.amount.{$event_in_cart->event_id}", $fee_data, true );
 	$cost = $fee_data[$price_values["event_{$event_in_cart->event_id}_amount"]]['value'];
       } else {
+	$event_price_values = array();
+	foreach ( $price_values as $key => $value ) {
+	  if ( preg_match( "/event_{$event_in_cart->event_id}_(price.*)/", $key, $matches ) ) {
+	    $event_price_values[$matches[1]] = $value;
+	  }
+	}
 	$price_sets = CRM_Price_BAO_Set::getSetDetail( $price_set_id, true );
 	$price_set = $price_sets[$price_set_id];
 	$price_set_amount = array( );
-	CRM_Price_BAO_Set::processAmount( $price_set['fields'], $price_values, $price_set_amount );
-	$cost = $price_values['amount'];
+	CRM_Price_BAO_Set::processAmount( $price_set['fields'], $event_price_values, $price_set_amount );
+	$cost = $event_price_values['amount'];
       }
       $num_participants = count( $this->participants );
       $amount = $cost * $num_participants;
@@ -156,7 +162,7 @@ WHERE  v.option_group_id = g.id
     $this->buildPaymentFields( );
 
     $this->assign( 'line_items', $line_items );
-    $this->assign( 'total', $total );
+    $this->assign( 'total', $this->total );
     $buttons = array( );
     $buttons[] = array(
       'name' => ts('<< Go Back'),
