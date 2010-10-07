@@ -17,6 +17,12 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
     require_once 'CRM/Contact/BAO/Contact.php';
 
     $contact = CRM_Contact_BAO_Contact::matchContactOnEmail( $participant->email );
+
+    if ($contact == null)
+    {
+      $contact = $this->createNewContact( $participant );
+    }
+
     $contactID = $contact->contact_id;
 
     $transaction = new CRM_Core_Transaction( );
@@ -178,6 +184,25 @@ WHERE  v.option_group_id = g.id
     $this->addButtons( $buttons );
 
     $this->addFormRule( array( 'CRM_Event_Form_Checkout_Payment', 'formRule' ), $this );
+  }
+
+  function createNewContact( $participant )
+  {
+    require_once 'CRM/Contact/BAO/Group.php';
+
+    $params = array( 'name' => 'RegisteredByOther' );
+    $values = array( );
+    $group = CRM_Contact_BAO_Group::retrieve( $params, $values );
+    $add_to_groups = array( );
+    if ( $group != null ) {
+      $add_to_groups[] = $group->id;
+    }
+    $params = array( );
+    $params['email-Primary'] = $participant->email;
+    $fields = array( );
+    $contactID =& CRM_Contact_BAO_Contact::createProfileContact( $params, $fields, null, $add_to_groups );
+    $contact = CRM_Contact_BAO_Contact::matchContactOnEmail( $participant->email );
+    return $contact;
   }
 
   static function formRule( $fields, $files, $self ) 
