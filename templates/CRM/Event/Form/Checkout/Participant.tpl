@@ -1,5 +1,5 @@
-  <fieldset class="participant" id="participant_{$participant->index}">
-    <legend>{$participant->name()}</legend>
+  <div class="participant" id="event_in_cart_{$event_in_cart->id}_participant_{$participant->index}">
+    {$participant->name()}
     {if $participant->index == 0}
       {$contact->email}    
     {/if}
@@ -11,4 +11,4 @@
       </label>
       {$form.$field_name.html}
     {/foreach}
-  </fieldset>
+  </div>

@@ -5,6 +5,7 @@ class CRM_Event_Form_Checkout extends CRM_Core_Form
   public $_action;
   public $cart;
   public $contact;
+  public $event_cart_id = null;
   public $_mode;
   public $participants;
 
@@ -39,35 +40,45 @@ class CRM_Event_Form_Checkout extends CRM_Core_Form
 
   function loadCart( )
   {
-    $this->cart = CRM_Event_BAO_Cart::find_or_create_for_current_session( );
+    if ( $this->event_cart_id == null ) {
+      $this->cart = CRM_Event_BAO_Cart::find_or_create_for_current_session( );
+    } else {
+      $this->cart = CRM_Event_BAO_Cart::find_by_id( $this->event_cart_id );
+    }
     $this->cart->load_associations( );
   }
 
   function loadParticipants( )
   {
-    $this->participants = array ( );
-    if ( array_key_exists( "participant_0_email", $this->_submitValues ) ) {
+    require_once 'CRM/Event/BAO/MerParticipant.php';
+    $event_in_cart_id = $this->cart->events_in_carts[0]->id;
+    if ( array_key_exists( "event_in_cart_{$event_in_cart_id}_participant_0_email", $this->_submitValues ) ) {
       $participants_data = $this->_submitValues;
     } else {
-      $participants_data = $this->getValuesForPage( 'Participants' );
+      $participants_data = $this->getValuesForPage( 'ParticipantsAndPrices' );
     }
     foreach ( $participants_data as $key => $value ) {
       $matches = array();
-      if ( preg_match( "/participant_(\d+)_email/", $key, $matches ) ) {
+      if ( preg_match( "/event_in_cart_(\d+)_participant_(\d+)_email/", $key, $matches ) ) {
 	if ( trim( $value ) == "" ) {
 	  continue;
 	}
+	$event_in_cart_id = $matches[1];
+	$participant_index = $matches[2];
+	$event_in_cart = $this->cart->get_event_in_cart_by_id( $event_in_cart_id );
 	$participant = new CRM_Event_BAO_MerParticipant();
-	$participant->index = $matches[1];
-	$participant->load_values( $participants_data );
-	$this->participants[] = $participant;
+	$participant->index = $participant_index;
+	$participant->load_values( $participants_data, $event_in_cart );
+	$event_in_cart->add_participant( $participant );
       }
     }
-    if ( empty( $this->participants ) ) {
-      $participant = new CRM_Event_BAO_MerParticipant();
-      $participant->index = 0;
-      $participant->contact_id = $this->getContactID( );
-      $this->participants[] = $participant;
+    foreach ( $this->cart->events_in_carts as $event_in_cart ) {
+      if ( empty($event_in_cart->participants) ) {
+	$participant = new CRM_Event_BAO_MerParticipant();
+	$participant->index = 0;
+	$participant->contact_id = $this->getContactID( );
+	$event_in_cart->add_participant( $participant );
+      }
     }
   }
 
@@ -82,10 +93,12 @@ class CRM_Event_Form_Checkout extends CRM_Core_Form
 
   function setDefaultValues( )
   {
-    require 'CRM/Contact/BAO/Contact.php';
+    require_once 'CRM/Contact/BAO/Contact.php';
     $defaults = array( );
     $contact_details = CRM_Contact_BAO_Contact::getContactDetails( $this->getContactID() );
-    $defaults["participant_0_email"] = $contact_details[1];
+    foreach ( $this->cart->events_in_carts as $event_in_cart ) {
+      $defaults["event_in_cart_{$event_in_cart->id}_participant_0_email"] = $contact_details[1];
+    }
     return $defaults;
   }
 }

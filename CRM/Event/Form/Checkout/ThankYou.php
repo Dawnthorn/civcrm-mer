@@ -14,6 +14,11 @@ class CRM_Event_Form_Checkout_ThankYou extends CRM_Event_Form_Checkout
     $contribution = CRM_Contribute_BAO_Contribution::retrieve( $params, $data, $ids );
     $this->assign( 'events_in_carts', $this->cart->events_in_carts );
     $this->assign( 'contribution', $contribution );
-    $this->assign( 'participants', $this->participants );
+  }
+
+  function preProcess( )
+  {
+    $this->event_cart_id = $this->get( 'last_event_cart_id' );
+    parent::preProcess( );
   }
 }

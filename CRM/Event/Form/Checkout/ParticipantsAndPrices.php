@@ -6,7 +6,7 @@ require_once 'CRM/Event/BAO/Cart.php';
 require_once 'CRM/Event/Form/Checkout.php';
 require_once 'CRM/Price/BAO/Set.php';
 
-class CRM_Event_Form_Checkout_Prices extends CRM_Event_Form_Checkout
+class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Checkout
 {
   public $price_fields_for_event;
 
@@ -14,6 +14,10 @@ class CRM_Event_Form_Checkout_Prices extends CRM_Event_Form_Checkout
   {
     $this->price_fields_for_event = array();
     foreach ( $this->cart->events_in_carts as $event_in_cart ) {
+      foreach ( $event_in_cart->participants as $participant ) {
+	$participant->load_fields( $this, $event_in_cart );
+      }
+
       $this->price_fields_for_event[$event_in_cart->event_id] = array();
       $base_field_name = "event_{$event_in_cart->event_id}_amount";
       $price_set_id = CRM_Price_BAO_Set::getFor( "civicrm_event", $event_in_cart->event_id );

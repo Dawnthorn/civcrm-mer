@@ -7,29 +7,25 @@ class CRM_Event_BAO_MerParticipant
   public $fields = array( );
   public $index;
 
-  function email_field_name( )
+  function email_field_name( $event_in_cart )
   {
-    return "participant_{$this->index}_email";
+    return "event_in_cart_{$event_in_cart->id}_participant_{$this->index}_email";
   }
 
-  function load_fields( $form )
+  function load_fields( $form, $event_in_cart )
   {
-    $field_name =     $field = $form->add( 'text', $this->email_field_name( ), ts( 'Email Address' ), array( 'size' => 30, 'maxlength' => 60, true ) );;
+    $field = $form->add( 'text', $this->email_field_name( $event_in_cart ), ts( 'Email Address' ), array( 'size' => 30, 'maxlength' => 60, true ) );;
     $this->fields[] = $field;
   }
 
-  function load_values( $values )
+  function load_values( $values, $event_in_cart )
   {
-    $this->email = $values[$this->email_field_name( )];
+    $this->email = $values[$this->email_field_name( $event_in_cart )];
   }
 
   function name( )
   {
-    if ( $this->index == 0 ) {
-      return "Main Participant";
-    } else {
-      return "Participant {$this->number()}";
-    }
+    return "Participant {$this->number()}";
   }
 
   function number( )

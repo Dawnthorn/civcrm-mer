@@ -2,6 +2,7 @@
 
 <div class="crm-block crm-event-thankyou-form-block">
   {foreach from=$events_in_carts item=event_in_cart}
+    {$event_in_cart->event->title}
     {if $event_in_cart->event->thankyou_text}
       <div id="intro_text" class="crm-section event_thankyou_text-section">
 	<p>
@@ -9,18 +10,15 @@
 	</p>
       </div>
     {/if}
-  {/foreach}
-</div>
-
-<hr/>
-
-<div class="participants">
-  <div>
-    Participants:
-  </div>
-  {foreach from=$participants item=participant}
     <div class="participants">
-      {$participant->email}
+      <div>
+	Participants:
+      </div>
+      {foreach from=$event_in_cart->participants item=participant}
+	<div class="participants">
+	  {$participant->email}
+	</div>
+      {/foreach}
     </div>
   {/foreach}
 </div>

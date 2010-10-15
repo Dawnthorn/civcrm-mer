@@ -8,10 +8,16 @@ class CRM_Event_BAO_EventInCart extends CRM_Event_DAO_EventInCart implements
   public $assocations_loaded = false;
   public $event;
   public $event_cart;
+  public $participants = array( );
 
   function __construct( )
   {
     parent::__construct( );
+  }
+
+  public function add_participant( $participant )
+  {
+    $this->participants[] = $participant;
   }
 
   public static function create( $params )

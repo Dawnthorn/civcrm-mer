@@ -1,0 +1,17 @@
+How to regenerate SQL from schema
+---------------------------------
+
+1. You need to have a copy of the CiviCRM source code (not the Drupal
+package).
+2. Create a symlink to the civicrm_mer/schema/Event/Cart directory from the
+xml/schema/Event directory in the CiviCRM source code. E.g. 
+cd xml/schema/Event
+ln -s <drupal_site_path>/sites/all/modules/civicrm_mer/schema/Event/Cart
+3. Generate the SQL
+cd ../..
+php GenCode.php schema/Schema.xml
+4. Open up sql/civicrm.mysql and pull out the tables that got created and put
+them in sql/0.1.mysql.
+5. Copy the generated DAO files into the plugin:
+cp CRM/Event/DAO/EventInCart.php <drupal_site_path>/sites/all/modules/civicrm_mer/CRM/Event/DAO/
+cp CRM/Event/DAO/Cart.php <drupal_site_path>/sites/all/modules/civicrm_mer/CRM/Event/DAO/

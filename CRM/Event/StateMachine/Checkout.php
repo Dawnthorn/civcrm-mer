@@ -22,10 +22,7 @@ class CRM_Event_StateMachine_Checkout extends CRM_Core_StateMachine
       }
     }
 
-    if ($is_monetary) {
-      $pages["CRM_Event_Form_Checkout_Prices"] = null;
-    }
-    $pages["CRM_Event_Form_Checkout_Participants"] = null;
+    $pages["CRM_Event_Form_Checkout_ParticipantsAndPrices"] = null;
     if ($is_monetary) {
       $pages["CRM_Event_Form_Checkout_Payment"] = null;
     }

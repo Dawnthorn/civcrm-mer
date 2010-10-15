@@ -8,7 +8,8 @@ CREATE TABLE civicrm_event_carts (
 
      id int unsigned NOT NULL AUTO_INCREMENT  COMMENT 'Cart Id',
      user_id int unsigned    COMMENT 'FK to civicrm_contact who created this
-cart'
+cart',
+     completed tinyint   DEFAULT 0
 ,
     PRIMARY KEY ( id )
 

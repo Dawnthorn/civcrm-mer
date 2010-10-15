@@ -71,33 +71,46 @@ class CRM_Event_BAO_Cart extends CRM_Event_DAO_Cart
     }
   }
 
-  public static function find_by_user_id( $user_id )
-  {
-    return self::find_by_params( array( 'user_id' => $user->id ) );
-  }
-
   public static function find_or_create_for_current_session( )
   {
     $session = CRM_Core_Session::singleton( );
     $event_cart_id = $session->get( 'event_cart_id' );
-    if ( is_null( $event_cart_id ) ) {
+    if ( !is_null( $event_cart_id ) ) {
+      $cart = self::find_uncompleted_by_id( $event_cart_id );
+    }
+    if ( $cart === false ) {
       $userID = $session->get( 'userID' );
       if ( is_null( $userID ) ) {
 	$cart = self::create( array( ) );
       } else {
-	$cart = self::find_by_user_id( $userID );
+	$cart = self::find_uncompleted_by_user_id( $userID );
 	if ( $cart === false ) {
 	  $cart = self::create( array( 'user_id' => $userID ) );
 	}
       }
       $session->set( 'event_cart_id', $cart->id );
-    } else {
-      $cart = self::find_by_id( $event_cart_id );
-      if ( $cart === false ) {
-	CRM_Core_Error::fatal( ts('The event_cart_id session variable is set to %1, but there is no such cart in the database.', array( 1 => $event_cart_id ) ) );
-      }
     }
     return $cart;
+  }
+
+  public static function find_uncompleted_by_id( $id )
+  {
+    return self::find_by_params( array( 'id' => $id, 'completed' => 0 ) );
+  }
+
+  public static function find_uncompleted_by_user_id( $user_id )
+  {
+    return self::find_by_params( array( 'user_id' => $user->id, 'completed' => 0 ) );
+  }
+
+  public function get_event_in_cart_by_id( $event_in_cart_id )
+  {
+    foreach ( $this->events_in_carts as $event_in_cart ) {
+      if ( $event_in_cart->id == $event_in_cart_id ) {
+	return $event_in_cart;
+      }
+    }
+    return null;
   }
 
   public function load_associations( )

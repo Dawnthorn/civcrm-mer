@@ -135,7 +135,7 @@ WHERE  v.option_group_id = g.id
   {
     $line_items = array();
     $this->total = 0;
-    $price_values = $this->getValuesForPage( 'Prices' );
+    $price_values = $this->getValuesForPage( 'ParticipantsAndPrices' );
     foreach ( $this->cart->events_in_carts as $event_in_cart ) {
       $price_set_id = CRM_Price_BAO_Set::getFor( "civicrm_event", $event_in_cart->event_id );
       if ( $price_set_id === false ) {
@@ -154,7 +154,7 @@ WHERE  v.option_group_id = g.id
 	CRM_Price_BAO_Set::processAmount( $price_set['fields'], $event_price_values, $price_set_amount );
 	$cost = $event_price_values['amount'];
       }
-      $num_participants = count( $this->participants );
+      $num_participants = count( $event_in_cart->participants );
       $amount = $cost * $num_participants;
       $line_items[] = array( 
 	'event' => $event_in_cart->event,
@@ -255,15 +255,17 @@ WHERE  v.option_group_id = g.id
     }
     require_once 'CRM/Event/Form/Registration/Confirm.php';
     $contribution =& CRM_Event_Form_Registration_Confirm::processContribution( $this, $params, $result, $contact_id, false, false );
-    $this->set ('contributionID', $contribution->id );
+    $this->set( 'contributionID', $contribution->id );
     $params['contributionID'] = $contribution->id;
     $params['contributionTypeID'] = $contribution->contribution_type_id;
     $params['receive_date'] =  $contribution->receive_date;
     $params['trxn_id'] = $contribution->trxn_id;
-
-    $participant_values = $this->getValuesForPage( 'Participants' ); 
+    $this->set( 'last_event_cart_id', $this->cart->id );
+    $this->cart->completed = true;
+    $this->cart->save( );
+    $participant_values = $this->getValuesForPage( 'ParticipantsAndPrices' ); 
     foreach ( $this->cart->events_in_carts as $event_in_cart ) {
-      foreach ( $this->participants as $participant ) {
+      foreach ( $event_in_cart->participants as $participant ) {
 	$this->addParticipant( $params, $participant, $event_in_cart->event_id );
       }
     }

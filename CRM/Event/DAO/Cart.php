@@ -93,6 +93,11 @@ class CRM_Event_DAO_Cart extends CRM_Core_DAO
      */
     public $user_id;
     /**
+     *
+     * @var boolean
+     */
+    public $completed;
+    /**
      * class constructor
      *
      * @access public
@@ -136,6 +141,11 @@ class CRM_Event_DAO_Cart extends CRM_Core_DAO
                     'name' => 'user_id',
                     'type' => CRM_Utils_Type::T_INT,
                     'FKClassName' => 'CRM_Contact_DAO_Contact',
+                ) ,
+                'completed' => array(
+                    'name' => 'completed',
+                    'type' => CRM_Utils_Type::T_BOOLEAN,
+                    'title' => ts('Completed') ,
                 ) ,
             );
         }
