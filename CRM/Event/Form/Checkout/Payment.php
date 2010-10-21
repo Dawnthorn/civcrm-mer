@@ -24,6 +24,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
     }
 
     $contactID = $contact->contact_id;
+    $participant->contact_id = $contact->contact_id;
 
     $transaction = new CRM_Core_Transaction( );
 
@@ -217,6 +218,32 @@ WHERE  v.option_group_id = g.id
     return $contact;
   }
 
+  function emailParticipant( $event_in_cart, $participant )
+  {
+    require_once 'CRM/Core/BAO/MessageTemplates.php';
+    $event = $event_in_cart->event;
+    $send_template_params = array
+    (
+      'groupName' => 'msg_tpl_workflow_event',
+      'valueName' => 'event_online_receipt',
+      'contactId' => $participant->contact_id,
+      'isTest' => false,
+      'tplParams' => array
+      (
+	'email' => $participant->email,
+	'confirm_email_text' => $event->confirm_email_text,
+	'isShowLocation' => $event->is_show_location,
+      ),
+      'from' => "{$event->confirm_from_name} <{$event->confirm_from_email}>",
+      'toName' => "{$participant->first_name} {$partcipant->last_name}",
+      'toEmail' => $participant->email,
+      'autoSubmitted' => true,
+      'cc' => $event->cc_confirm,
+      'bcc' => $event->bcc_confirm,
+    );
+    CRM_Core_BAO_MessageTemplates::sendTemplate($send_template_params);
+  }
+
   static function formRule( $fields, $files, $self ) 
   {
     $errors = array( );
@@ -279,6 +306,7 @@ WHERE  v.option_group_id = g.id
     foreach ( $this->cart->events_in_carts as $event_in_cart ) {
       foreach ( $event_in_cart->participants as $participant ) {
 	$this->addParticipant( $params, $participant, $event_in_cart->event_id );
+//	$this->emailParticipant( $event_in_cart, $participant );
       }
     }
   }
