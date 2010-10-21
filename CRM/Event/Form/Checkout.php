@@ -60,9 +60,6 @@ class CRM_Event_Form_Checkout extends CRM_Core_Form
     foreach ( $participants_data as $key => $value ) {
       $matches = array();
       if ( preg_match( "/event_in_cart_(\d+)_participant_(\d+)_email/", $key, $matches ) ) {
-	if ( trim( $value ) == "" ) {
-	  continue;
-	}
 	$event_in_cart_id = $matches[1];
 	$participant_index = $matches[2];
 	$event_in_cart = $this->cart->get_event_in_cart_by_id( $event_in_cart_id );
@@ -95,9 +92,12 @@ class CRM_Event_Form_Checkout extends CRM_Core_Form
   {
     require_once 'CRM/Contact/BAO/Contact.php';
     $defaults = array( );
-    $contact_details = CRM_Contact_BAO_Contact::getContactDetails( $this->getContactID() );
+    $params = array( 'id' => $this->getContactID() );
+    $contact = CRM_Contact_BAO_Contact::retrieve( $params );
     foreach ( $this->cart->events_in_carts as $event_in_cart ) {
-      $defaults["event_in_cart_{$event_in_cart->id}_participant_0_email"] = $contact_details[1];
+      $defaults[CRM_Event_BAO_MerParticipant::full_field_name( $event_in_cart, 0, 'email' )] = CRM_Event_BAO_MerParticipant::primary_email_from_contact( $contact );
+      $defaults[CRM_Event_BAO_MerParticipant::full_field_name( $event_in_cart, 0, 'first_name' )] = $contact->first_name;
+      $defaults[CRM_Event_BAO_MerParticipant::full_field_name( $event_in_cart, 0, 'last_name' )] = $contact->last_name;
     }
     return $defaults;
   }

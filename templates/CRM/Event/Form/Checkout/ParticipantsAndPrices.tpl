@@ -60,6 +60,10 @@ function add_participant( event_in_cart_id ) {
   );
 }
 
+function delete_participant( event_in_cart_id, index ) {
+  $('#event_in_cart_' + event_in_cart_id + '_participant_' + index).remove();
+}
+
 $('#ajax_error').ajaxError(
   function( e, xrh, settings, exception ) {
     $(this).append('<div class="error">Error adding a participant at ' + settings.url + ': ' + exception);
