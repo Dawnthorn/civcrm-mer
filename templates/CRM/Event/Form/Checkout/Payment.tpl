@@ -21,7 +21,7 @@
     {foreach from=$line_items item=line_item}
       <tr>
 	<td>
-	  {$line_item.event->title}
+	  {$line_item.event->title} ({$line_item.event->start_date})
 	</td>
 	<td>
 	  {$line_item.num_participants}<br/>
