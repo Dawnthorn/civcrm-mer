@@ -93,7 +93,7 @@ class CRM_Event_Form_Checkout extends CRM_Core_Form
     require_once 'CRM/Contact/BAO/Contact.php';
     $defaults = array( );
     $params = array( 'id' => $this->getContactID() );
-    $contact = CRM_Contact_BAO_Contact::retrieve( $params );
+    $contact = CRM_Contact_BAO_Contact::retrieve( $params, $defaults );
     foreach ( $this->cart->events_in_carts as $event_in_cart ) {
       $defaults[CRM_Event_BAO_MerParticipant::full_field_name( $event_in_cart, 0, 'email' )] = CRM_Event_BAO_MerParticipant::primary_email_from_contact( $contact );
       $defaults[CRM_Event_BAO_MerParticipant::full_field_name( $event_in_cart, 0, 'first_name' )] = $contact->first_name;
