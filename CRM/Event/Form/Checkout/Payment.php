@@ -208,7 +208,10 @@ WHERE  v.option_group_id = g.id
     }
     $params = array( );
     $params['email-Primary'] = $participant->email;
+    $params['first_name'] = $participant->first_name;
+    $params['last_name'] = $participant->last_name;
     $fields = array( );
+
     $contactID =& CRM_Contact_BAO_Contact::createProfileContact( $params, $fields, null, $add_to_groups );
     $contact = CRM_Contact_BAO_Contact::matchContactOnEmail( $participant->email );
     return $contact;
