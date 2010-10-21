@@ -10,16 +10,30 @@
 	</p>
       </div>
     {/if}
-    <div class="participants">
-      <div>
-	Participants:
-      </div>
-      {foreach from=$event_in_cart->participants item=participant}
-	<div class="participants">
-	  {$participant->email}
+    {if $event_in_cart->num_not_waiting_participants() > 0}
+      <div class="participants">
+	<div>
+	  Participants:
 	</div>
-      {/foreach}
-    </div>
+	{foreach from=$event_in_cart->not_waiting_participants() item=participant}
+	  <div class="participants">
+	    {$participant->first_name} {$participant->last_name}
+	  </div>
+	{/foreach}
+      </div>
+    {/if}
+    {if $event_in_cart->num_waiting_participants() > 0}
+      <div class="waitlisted_participants">
+	<div>
+	  Waitlisted:
+	</div>
+	{foreach from=$event_in_cart->waiting_participants() item=participant}
+	  <div class="participants">
+	    {$participant->first_name} {$participant->last_name}
+	  </div>
+	{/foreach}
+      </div>
+    {/if}
   {/foreach}
 </div>
 
