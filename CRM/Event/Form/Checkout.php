@@ -100,8 +100,7 @@ class CRM_Event_Form_Checkout extends CRM_Core_Form
   function preProcess( )
   {
     $this->_action = CRM_Utils_Request::retrieve( 'action', 'String', $this, false );
-    #    $this->_mode = ( $this->_action == 1024 ) ? 'test' : 'live';
-    $this->_mode = 'test';
+    $this->_mode = 'live';
     $this->loadCart( );
     $this->loadParticipants( );
     $this->checkWaitingList( );
