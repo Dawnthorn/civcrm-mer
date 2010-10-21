@@ -9,6 +9,24 @@ class CRM_Event_Form_Checkout extends CRM_Core_Form
   public $_mode;
   public $participants;
 
+  function checkWaitingList( )
+  {
+    require_once 'CRM/Event/BAO/Participant.php';
+    foreach ( $this->cart->events_in_carts as $event_in_cart )
+    {
+      $empty_seats = CRM_Event_BAO_Participant::eventFull( $event_in_cart->event_id, true );
+      if ( !is_numeric( $empty_seats ) ) {
+	$empty_seats = 0;
+      }
+      foreach ( $event_in_cart->participants as $participant ) {
+	if ( $empty_seats <= 0 ) {
+	  $participant->must_wait = true;
+	}
+	$empty_seats--;
+      }
+    }
+  }
+
   function getContactID( )
   {
     $tempID = CRM_Utils_Request::retrieve( 'cid', 'Positive', $this );
@@ -86,6 +104,7 @@ class CRM_Event_Form_Checkout extends CRM_Core_Form
     $this->_mode = 'test';
     $this->loadCart( );
     $this->loadParticipants( );
+    $this->checkWaitingList( );
   }
 
   function setDefaultValues( )

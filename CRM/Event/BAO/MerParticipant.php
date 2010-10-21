@@ -8,6 +8,7 @@ class CRM_Event_BAO_MerParticipant
   public $first_name;
   public $index;
   public $last_name;
+  public $must_wait = false;
 
   function email_field_name( $event_in_cart )
   {
@@ -35,7 +36,7 @@ class CRM_Event_BAO_MerParticipant
   {
     $this->email = $values[$this->email_field_name( $event_in_cart )];
     $this->first_name = $values[$this->html_field_name( $event_in_cart, 'first_name' ) ];
-    $this->last_name = $values[$this->html_field_name( $event_in_cart, 'first_name' ) ];
+    $this->last_name = $values[$this->html_field_name( $event_in_cart, 'last_name' ) ];
   }
 
   function name( )

@@ -88,6 +88,25 @@ class CRM_Event_BAO_EventInCart extends CRM_Event_DAO_EventInCart implements
     }
   }
 
+  public function not_waiting_participants( ) {
+    $result = array( );
+    foreach ( $this->participants as $participant ) {
+      if ( !$participant->must_wait ) {
+	$result[] = $participant;	
+      }
+    }
+    return $result;
+  }
+
+  public function num_not_waiting_participants( ) {
+    return count( $this->not_waiting_participants( ) );
+  }
+
+  public function num_waiting_participants( ) {
+    return count( $this->waiting_participants( ) );
+  }
+
+
   public function offsetExists( $offset ) {
     return array_key_exists($this->fields( ), $offset);
   }
@@ -107,6 +126,16 @@ class CRM_Event_BAO_EventInCart extends CRM_Event_DAO_EventInCart implements
   }
 
   public function offsetUnset( $offset ) {
+  }
+
+  public function waiting_participants( ) {
+    $result = array( );
+    foreach ( $this->participants as $participant ) {
+      if ( $participant->must_wait ) {
+	$result[] = $participant;	
+      }
+    }
+    return $result;
   }
 }
 ?>

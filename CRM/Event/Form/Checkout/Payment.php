@@ -43,6 +43,12 @@ WHERE  v.option_group_id = g.id
     if ( $dao->fetch( ) ) {
       $roleID = $dao->value;
     }
+
+    require_once 'CRM/Event/PseudoConstant.php';
+    if ( $participant->must_wait ) {
+      $waiting_statuses = CRM_Event_PseudoConstant::participantStatus( null, "class = 'Waiting'" );
+      $params['participant_status_id'] = array_search( 'On waitlist', $waiting_statuses );
+    }
     
     // handle register date CRM-4320
     $registerDate = date( 'YmdHis' );
@@ -154,13 +160,16 @@ WHERE  v.option_group_id = g.id
 	CRM_Price_BAO_Set::processAmount( $price_set['fields'], $event_price_values, $price_set_amount );
 	$cost = $event_price_values['amount'];
       }
-      $num_participants = count( $event_in_cart->participants );
+      $num_participants = $event_in_cart->num_not_waiting_participants( );
       $amount = $cost * $num_participants;
       $line_items[] = array( 
-	'event' => $event_in_cart->event,
-	'num_participants' => $num_participants, 
-	'cost' => $cost,
 	'amount' => $amount,
+	'cost' => $cost,
+	'event' => $event_in_cart->event,
+	'participants' => $event_in_cart->not_waiting_participants( ),
+	'num_participants' => $num_participants, 
+	'num_waiting_participants' => $event_in_cart->num_waiting_participants( ),
+	'waiting_participants' => $event_in_cart->waiting_participants( ),
       );
       $this->total += $amount;
     }
