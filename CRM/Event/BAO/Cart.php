@@ -75,6 +75,7 @@ class CRM_Event_BAO_Cart extends CRM_Event_DAO_Cart
   {
     $session = CRM_Core_Session::singleton( );
     $event_cart_id = $session->get( 'event_cart_id' );
+    $cart = false;
     if ( !is_null( $event_cart_id ) ) {
       $cart = self::find_uncompleted_by_id( $event_cart_id );
     }
