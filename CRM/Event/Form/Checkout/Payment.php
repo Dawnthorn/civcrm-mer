@@ -10,6 +10,10 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   public $_fields = array();
   public $_paymentProcessor;
   public $total;
+  public $sub_total;
+  public $_participant_event = array();
+  public $discounts = array();
+  public $discount_amount_total = 0;
 
   function addParticipant( $params, $participant, $eventID ) 
   {
@@ -141,7 +145,7 @@ WHERE  v.option_group_id = g.id
   function buildQuickForm( )
   {
     $line_items = array();
-    $this->total = 0;
+    $this->sub_total = 0;
     $price_values = $this->getValuesForPage( 'ParticipantsAndPrices' );
     foreach ( $this->cart->events_in_carts as $event_in_cart ) {
       $price_set_id = CRM_Price_BAO_Set::getFor( "civicrm_event", $event_in_cart->event_id );
@@ -161,6 +165,16 @@ WHERE  v.option_group_id = g.id
 	CRM_Price_BAO_Set::processAmount( $price_set['fields'], $event_price_values, $price_set_amount );
 	$cost = $event_price_values['amount'];
       }
+      
+    /* See who's eligible for discounts */
+    if ($event_in_cart->participants) {
+    	foreach ($event_in_cart->participants as $participant) {
+    		$this->_participant_event[$participant->email]['name'] = 
+    			ucwords($participant->first_name." ".$participant->last_name);
+    		$this->_participant_event[$participant->email]['count'] += 1;
+    		$this->_participant_event[$participant->email]['cost'] += $cost;
+    	}
+    }
       $num_participants = $event_in_cart->num_not_waiting_participants( );
       $amount = $cost * $num_participants;
       $line_items[] = array( 
@@ -172,13 +186,25 @@ WHERE  v.option_group_id = g.id
 	'num_waiting_participants' => $event_in_cart->num_waiting_participants( ),
 	'waiting_participants' => $event_in_cart->waiting_participants( ),
       );
-      $this->total += $amount;
+      $this->sub_total += $amount;
     }
 
+	/* apply discount */
+	foreach ($this->_participant_event as $key => $value) {
+		if ($value['count'] >= 2) {
+			$discount_amount += 0.20 * $value['cost'];
+			$this->discount_amount_total += $discount_amount;
+			$this->discounts[] = (array('title' => '20% discount for '.$value['name'].' ('.$key.')', 'amount' => $discount_amount));
+    	}
+    }
+    
+	$this->total = $this->sub_total - $this->discount_amount_total;
     $this->buildPaymentFields( );
 
     $this->assign( 'line_items', $line_items );
+    $this->assign( 'sub_total', $this->sub_total );
     $this->assign( 'total', $this->total );
+    $this->assign(	'discounts', $this->discounts);
     $buttons = array( );
     $buttons[] = array(
       'name' => ts('<< Go Back'),

@@ -45,12 +45,39 @@
 	  {$line_item.cost}
 	</td>
 	<td>
-	  {$line_item.amount}
+	  &nbsp;{$line_item.amount}
 	</td>
       </tr>
     {/foreach}
   </tbody>
   <tfoot>
+  {if $discounts}
+    <tr>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+	Subtotal:
+      </td>
+      <td>
+	&nbsp;{$sub_total}
+      </td>
+    </tr>  
+  {foreach from=$discounts key=myId item=i}
+    <tr>
+      <td>{$i.title}
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td>
+   -{$i.amount}
+      </td>
+    </tr>
+   {/foreach} 
+   {/if} 
     <tr>
       <td>
       </td>
@@ -60,7 +87,7 @@
 	Total:
       </td>
       <td>
-	{$total}
+	&nbsp;{$total}
       </td>
     </tr>
   </tfoot>
