@@ -12,7 +12,7 @@
 	{include file="CRM/Event/Form/Checkout/Participant.tpl}
       {/foreach}
     </div>
-    <a href="#" onclick="add_participant({$event_in_cart->id});">add participant</a>
+    <a href="#" onclick="add_participant({$event_in_cart->id});">add another participant</a>
     {if $event_in_cart->event->is_monetary }
       <div class="price_choices">
 	{assign var=event_id value=$event_in_cart->event_id}
