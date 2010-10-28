@@ -191,7 +191,7 @@ WHERE  v.option_group_id = g.id
 
 	/* apply discount */
 	foreach ($this->_participant_event as $key => $value) {
-		if ($value['count'] >= 2) {
+		if ($value['count'] >= 3) {
 			$discount_amount += 0.20 * $value['cost'];
 			$this->discount_amount_total += $discount_amount;
 			$this->discounts[] = (array('title' => '20% discount for '.$value['name'].' ('.$key.')', 'amount' => $discount_amount));
