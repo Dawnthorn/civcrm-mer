@@ -14,6 +14,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   public $_participant_event = array();
   public $discounts = array();
   public $discount_amount_total = 0;
+  public $payment_required = true;
 
   function addParticipant( $params, $participant, $eventID ) 
   {
@@ -200,11 +201,12 @@ WHERE  v.option_group_id = g.id
     
 	$this->total = $this->sub_total - $this->discount_amount_total;
     $this->buildPaymentFields( );
-
+	if ($this->total == 0) $this->payment_required = false;
+	$this->assign( 'payment_required', $this->payment_required );
     $this->assign( 'line_items', $line_items );
     $this->assign( 'sub_total', $this->sub_total );
     $this->assign( 'total', $this->total );
-    $this->assign(	'discounts', $this->discounts);
+    $this->assign( 'discounts', $this->discounts);
     $buttons = array( );
     $buttons[] = array(
       'name' => ts('<< Go Back'),
@@ -222,6 +224,30 @@ WHERE  v.option_group_id = g.id
     $this->addFormRule( array( 'CRM_Event_Form_Checkout_Payment', 'formRule' ), $this );
   }
 
+  function setDefaultValues()
+  {
+	$defaults = array( );
+    $defaults = parent::setDefaultValues();
+	$contactID = parent::getContactID();
+	$defaults['billing_first_name'] = $defaults['first_name'];
+	$defaults['billing_middle_name'] = $defaults['billing_middle_name']; 
+	$defaults['billing_last_name'] = $defaults['last_name'];
+	foreach ($defaults as $default_name => $default_value) {
+		if ($default_name == 'address') {
+			foreach($default_value as $value_array) {
+				if ($value_array['is_billing']) {
+					$defaults['billing_street_address-'] = $value_array['street_address'];
+					$defaults['billing_city-'] = $value_array['city'];
+					$defaults['billing_postal_code-'] = $value_array['postal_code'];
+					$defaults['billing_state_province_id-'] = $value_array['state_province_id'];
+					$defaults['billing_country_id-'] = $value_array['country_id'];
+				}
+			}
+		}
+	}
+	return $defaults;
+  }
+  
   function createNewContact( $participant )
   {
     require_once 'CRM/Contact/BAO/Group.php';
@@ -319,12 +345,14 @@ WHERE  v.option_group_id = g.id
       CRM_Utils_System::redirect( CRM_Utils_System::url( 'civicrm/event/cart_checkout', "_qf_Payment_display=1&qfKey={$this->controller->_key}", true, null, false ) );
     }
     require_once 'CRM/Event/Form/Registration/Confirm.php';
-    $contribution =& CRM_Event_Form_Registration_Confirm::processContribution( $this, $params, $result, $contact_id, false, false );
-    $this->set( 'contributionID', $contribution->id );
-    $params['contributionID'] = $contribution->id;
-    $params['contributionTypeID'] = $contribution->contribution_type_id;
-    $params['receive_date'] =  $contribution->receive_date;
-    $params['trxn_id'] = $contribution->trxn_id;
+    if ($this->payment_required) {
+		$contribution =& CRM_Event_Form_Registration_Confirm::processContribution( $this, $params, $result, $contact_id, false, false );
+		$this->set( 'contributionID', $contribution->id );
+		$params['contributionID'] = $contribution->id;
+		$params['contributionTypeID'] = $contribution->contribution_type_id;
+		$params['receive_date'] =  $contribution->receive_date;
+		$params['trxn_id'] = $contribution->trxn_id;
+    }
     $this->set( 'last_event_cart_id', $this->cart->id );
     $this->cart->completed = true;
     $this->cart->save( );

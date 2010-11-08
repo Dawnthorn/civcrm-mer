@@ -92,9 +92,9 @@
     </tr>
   </tfoot>
 </table>
-
+{if $payment_required == true}
 {include file='CRM/Core/BillingBlock.tpl'}
-
+{/if}
 <div id="crm-submit-buttons" class="crm-submit-buttons">
   {include file="CRM/common/formButtons.tpl" location="bottom"}
 </div>

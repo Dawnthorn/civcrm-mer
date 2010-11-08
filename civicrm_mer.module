@@ -21,11 +21,29 @@ function civicrm_mer_civicrm_pageRun( &$page ) {
   if ( !is_null( $register_url ) ) {
     $action  = CRM_Utils_Request::retrieve( 'action', 'String', $page, false );
     $event_id = CRM_Utils_Request::retrieve( 'id', 'Positive', $page, true );
+    $cart = CRM_Event_BAO_Cart::find_or_create_for_current_session( );
+    $cart->load_associations( );
+    $in_cart = false;
+    foreach ( $cart->events_in_carts as $event_in_cart ) {
+      if ($event_id == $event_in_cart->event->id)  {
+          $in_cart = true;
+          break;
+      } 
+    }
+
     if ( $action == CRM_Core_Action::PREVIEW ) {
-      $register_url = CRM_Utils_System::url( 'civicrm/event/add_to_cart', "id={$event_id}&reset=1&action=preview", true, null, true, true );
+      if ($in_cart) {
+        $register_url = CRM_Utils_System::url( 'civicrm/event/remove_from_cart', "id={$event_id}&reset=1&action=preview", true, null, true, true );
+      } else {
+        $register_url = CRM_Utils_System::url( 'civicrm/event/add_to_cart', "id={$event_id}&reset=1&action=preview", true, null, true, true );
+      }
     }
     else {
-      $register_url = CRM_Utils_System::url( 'civicrm/event/add_to_cart', "id={$event_id}&reset=1", true, null, true, true );
+      if ($in_cart) {
+         $register_url = CRM_Utils_System::url( 'civicrm/event/remove_from_cart', "id={$event_id}&reset=1", true, null, true, true );
+      } else {
+         $register_url = CRM_Utils_System::url( 'civicrm/event/add_to_cart', "id={$event_id}&reset=1", true, null, true, true );
+      }
     }
     $page->assign( 'registerURL', $register_url );
   }
