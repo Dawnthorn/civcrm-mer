@@ -1,4 +1,4 @@
-<?
+<?php
 
 function civicrm_mer_civicrm_config( &$config ) {
   $civicrm_mer_dir_path = dirname( __FILE__ );
