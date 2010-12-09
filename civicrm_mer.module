@@ -19,6 +19,7 @@ function civicrm_mer_civicrm_pageRun( &$page ) {
   $template = $page->getTemplate( );
   $register_url = $template->get_template_vars( 'registerURL' );
   if ( !is_null( $register_url ) ) {
+	require_once 'CRM/Event/BAO/Cart.php';
     $action  = CRM_Utils_Request::retrieve( 'action', 'String', $page, false );
     $event_id = CRM_Utils_Request::retrieve( 'id', 'Positive', $page, true );
     $cart = CRM_Event_BAO_Cart::find_or_create_for_current_session( );
