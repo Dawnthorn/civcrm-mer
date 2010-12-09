@@ -3,8 +3,10 @@
 class CRM_Event_BAO_MerParticipant
 {
   public $contact_id;
+  public $discount_amount = 0;
   public $cost;
   public $email;
+  public $fee_level;
   public $fields = array( );
   public $first_name;
   public $index;

@@ -11,7 +11,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   public $_paymentProcessor;
   public $total;
   public $sub_total;
-  public $_participant_event = array();
   public $discounts = array();
   public $discount_amount_total = 0;
   public $payment_required = true;
@@ -65,9 +64,9 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  'role_id'       => CRM_Utils_Array::value( 'participant_role_id', $params, $roleID ),
 	  'register_date' => ( $registerDate ) ? $registerDate : date( 'YmdHis' ),
 	  'source'        => isset( $params['participant_source'] ) ?  $params['participant_source']:$params['description'],
-	  'fee_level'     => $params['amount_level'],
+	  'fee_level'     => $participant->fee_level,
 	  'is_pay_later'  => CRM_Utils_Array::value( 'is_pay_later', $params, 0 ),
-	  'fee_amount'    => $participant->cost,
+	  'fee_amount'    => $participant->cost - $participant->discount_amount,
 	  'registered_by_id' => CRM_Utils_Array::value( 'registered_by_id', $params ),
 	  'discount_id'      => CRM_Utils_Array::value( 'discount_id', $params ),
 	  'fee_currency'     => CRM_Utils_Array::value( 'currencyID', $params )
@@ -139,9 +138,11 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   {
 	$line_items = array();
 	$this->sub_total = 0;
+	$mer_participants_by_email = array();
 	$price_values = $this->getValuesForPage( 'ParticipantsAndPrices' );
 	foreach ( $this->cart->events_in_carts as $event_in_cart ) {
 	  $price_set_id = CRM_Price_BAO_Set::getFor( "civicrm_event", $event_in_cart->event_id );
+	  $amount_level = null;
 	  if ( $price_set_id === false ) {
 		CRM_Core_OptionGroup::getAssoc( "civicrm_event.amount.{$event_in_cart->event_id}", $fee_data, true );
 		$cost = $fee_data[$price_values["event_{$event_in_cart->event_id}_amount"]]['value'];
@@ -157,18 +158,19 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$price_set_amount = array( );
 		CRM_Price_BAO_Set::processAmount( $price_set['fields'], $event_price_values, $price_set_amount );
 		$cost = $event_price_values['amount'];
+		$amount_level = $event_price_values['amount_level'];
 	  }
 
-	  /* See who's eligible for discounts */
-	  if ($event_in_cart->participants) {
-		foreach ($event_in_cart->participants as $participant) {
-		  $participant->cost = $cost;
-		  $this->_participant_event[$participant->email]['name'] = 
-			ucwords($participant->first_name." ".$participant->last_name);
-		  $this->_participant_event[$participant->email]['count'] += 1;
-		  $this->_participant_event[$participant->email]['cost'] += $cost;
+	  foreach ($event_in_cart->participants as $mer_participant) {
+		$mer_participant->cost = $cost;
+		$mer_participant->fee_level = $amount_level;
+		if ( !array_key_exists( $mer_participant->email, $mer_participants_by_email ) )
+		{
+		  $mer_pariticpants_by_email[$mer_participant->email] = array( );
 		}
+		$mer_participants_by_email[$mer_participant->email][] = $mer_participant;
 	  }
+
 	  $num_participants = $event_in_cart->num_not_waiting_participants( );
 	  $amount = $cost * $num_participants;
 	  $line_items[] = array( 
@@ -184,11 +186,23 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	}
 
 	/* apply discount */
-	foreach ($this->_participant_event as $key => $value) {
-	  if ($value['count'] >= 3) {
-		$discount_amount += 0.20 * $value['cost'];
-		$this->discount_amount_total += $discount_amount;
-		$this->discounts[] = (array('title' => '20% discount for '.$value['name'].' ('.$key.')', 'amount' => $discount_amount));
+	foreach ($mer_participants_by_email as $participant_email => $mer_participants) {
+	  if ( count( $mer_participants ) >= 3 )
+	  {
+		$participant_name = null;
+		$total_discount_for_participant = 0;
+		foreach ( $mer_participants as $mer_participant )
+		{
+		  $orig_cost = $mer_participant->cost;
+		  $mer_participant->discount_amount = round($mer_participant->cost * 0.20, 2);
+		  $total_discount_for_participant += $mer_participant->discount_amount;
+		  $participant_name = "{$mer_participant->first_name} {$mer_participant->last_name}";
+		}
+		$this->discount_amount_total += $total_discount_for_participant;
+		$this->discounts[] = array(
+		  'amount' => $total_discount_for_participant,
+		  'title' => '20% discount for ' . $participant_name . ' (' . $participant_email . ')',
+		);
 	  }
 	}
 
