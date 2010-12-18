@@ -5,7 +5,7 @@
 {foreach from=$events_in_carts key=index item=event_in_cart}
   <fieldset class="event_form">
     <legend>
-      {$event_in_cart->event->title}
+      {$event_in_cart->event->title} ({$event_in_cart->event->start_date})
     </legend>
     <div class="participants" id="event_in_cart_{$event_in_cart->id}_participants">
       {foreach from=$event_in_cart->participants item=participant}

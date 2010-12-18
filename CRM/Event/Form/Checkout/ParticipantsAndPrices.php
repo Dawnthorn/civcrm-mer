@@ -54,5 +54,26 @@ class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Check
 		'isDefault' => true )
 	  )
 	);
+	$this->addFormRule( array( 'CRM_Event_Form_Checkout_ParticipantsAndPrices', 'formRule' ), $this );
+  }
+
+  static function formRule( $fields, $fields, $self )
+  {
+	$errors = array();
+	foreach ( $self->cart->events_in_carts as $event_in_cart ) {
+	  foreach ( $event_in_cart->participants as $mer_participant ) {
+		$contact = CRM_Contact_BAO_Contact::matchContactOnEmail( $mer_participant->email );
+		if ($contact != null) {
+		  $participant = new CRM_Event_BAO_Participant();
+		  $participant->event_id = $event_in_cart->event_id;
+		  $participant->contact_id = $contact->id;
+		  $num_found = $participant->find();
+		  if ($num_found > 0) {
+			$errors[$mer_participant->email_field_name( $event_in_cart )] = "The participant {$mer_participant->email} is already registered for {$event_in_cart->event->title} ({$event_in_cart->event->start_date}).";
+		  }
+		}
+	  }
+	}
+	return empty( $errors ) ? true : $errors;
   }
 }
