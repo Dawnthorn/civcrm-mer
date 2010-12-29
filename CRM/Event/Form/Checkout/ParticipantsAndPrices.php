@@ -76,4 +76,16 @@ class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Check
 	}
 	return empty( $errors ) ? true : $errors;
   }
+
+  function preProcess( )
+  {
+	$user_id = $this->getContactID( );
+	if ( $user_id === NULL ) {
+	  CRM_Core_Session::setStatus( ts( "You must log in or create an account to register for events." ) );
+	  return CRM_Utils_System::redirect( "/user?destination=civicrm/event/cart_checkout&reset=1" );
+	}
+	else {
+	  return parent::preProcess( );
+	}
+  }
 }
