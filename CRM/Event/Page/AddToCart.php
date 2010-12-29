@@ -14,10 +14,10 @@ class CRM_Event_Page_AddToCart extends CRM_Core_Page {
     }
      
     require_once 'CRM/Event/BAO/Cart.php';
-    $cart = CRM_Event_BAO_Cart::find_or_create_for_current_session( );
+	$cart = CRM_Event_BAO_Cart::find_or_create_for_current_session( );
     $params = array( 'id' => $this->_id );
     CRM_Event_BAO_Event::retrieve( $params, $values['event'] );
-    $cart->add_event( $values['event']['id'] );
+	$cart->add_event( $values['event']['id'] );
     CRM_Core_Session::setStatus( ts("%1 has been added to your cart.", array( 1 => $values['event']['title'] ) ) );
 
     return CRM_Utils_System::redirect( $_SERVER['HTTP_REFERER'] );
