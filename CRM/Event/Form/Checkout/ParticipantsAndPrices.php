@@ -66,7 +66,7 @@ class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Check
 		if ($contact != null) {
 		  $participant = new CRM_Event_BAO_Participant();
 		  $participant->event_id = $event_in_cart->event_id;
-		  $participant->contact_id = $contact->id;
+		  $participant->contact_id = $contact->contact_id;
 		  $num_found = $participant->find();
 		  if ($num_found > 0) {
 			$errors[$mer_participant->email_field_name( $event_in_cart )] = "The participant {$mer_participant->email} is already registered for {$event_in_cart->event->title} ({$event_in_cart->event->start_date}).";
