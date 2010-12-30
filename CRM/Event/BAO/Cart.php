@@ -101,7 +101,7 @@ class CRM_Event_BAO_Cart extends CRM_Event_DAO_Cart
 
   public static function find_uncompleted_by_user_id( $user_id )
   {
-	return self::find_by_params( array( 'user_id' => $user->id, 'completed' => 0 ) );
+	return self::find_by_params( array( 'user_id' => $user_id, 'completed' => 0 ) );
   }
 
   public function get_event_in_cart_by_id( $event_in_cart_id )
