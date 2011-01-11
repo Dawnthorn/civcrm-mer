@@ -222,7 +222,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	);
 	$buttons[] = array(
 	  'isDefault' => true,
-	  'name' => ts('Continue >>'),
+	  'name' => ts('Complete Transaction >>'),
 	  'spacing' => '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
 	  'type' => 'next',
 	);
