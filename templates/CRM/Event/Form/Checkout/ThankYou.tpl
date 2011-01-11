@@ -40,8 +40,8 @@
 <hr/>
 
 <div class="contribution">
-  Total: {$contribution->total_amount|crmMoney}<br/>
-  Transaction Date: {$contribution->receive_date|crmDate}<br/>
-  Transaction #: {$contribution->trxn_id}
+  Total: {$transaction->total_amount|crmMoney}<br/>
+  Transaction Date: {$transaction->trxn_date|crmDate}<br/>
+  Transaction #: {$transaction->trxn_id}
 </div>
 

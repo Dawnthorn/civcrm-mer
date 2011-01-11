@@ -364,11 +364,13 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 
 	$contribution_statuses = CRM_Contribute_PseudoConstant::contributionStatus( null, 'name' );
 	require_once 'CRM/Event/Form/Registration/Confirm.php';
+	$this->set( 'transaction_id', $trxn->id );
 	$this->set( 'last_event_cart_id', $this->cart->id );
 	$this->cart->completed = true;
 	$this->cart->save( );
 	$participant_values = $this->getValuesForPage( 'ParticipantsAndPrices' ); 
 	$index = 0;
+	$participant_ids = array( );
 	foreach ( $this->cart->events_in_carts as $event_in_cart ) {
 	  foreach ( $event_in_cart->participants as $participant ) {
 		$index += 1;
@@ -394,6 +396,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 			'source' => $event_in_cart->event->title,
 			'contribution_status_id' => array_search( 'Completed', $contribution_statuses ),
 		  );
+		  require_once 'CRM/Contribute/BAO/Contribution.php';
 		  $contribution =& CRM_Contribute_BAO_Contribution::add( $contribParams, $ids );
 		  require_once 'CRM/Core/CustomFieldUtil.php';
 		  require_once 'CRM/Core/BAO/CustomValueTable.php';
@@ -425,10 +428,12 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		  $entity_trxn->copyValues($entity_financial_trxn_params);
 		  $entity_trxn->save();
 		}
-		$this->addParticipant( $params, $participant, $event_in_cart->event_id );
+		$participant = $this->addParticipant( $params, $participant, $event_in_cart->event_id );
+		$participant_ids[] = $participant->id;
 		//	$this->emailParticipant( $event_in_cart, $participant );
 	  }
 	}
+	$this->set( 'participant_ids', $participant_ids );
 	$transaction->commit();
   }
 
