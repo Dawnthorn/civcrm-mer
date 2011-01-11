@@ -80,11 +80,13 @@ class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Check
           $errors['_qf_default'] = ts( "Select at least one option from Event Fee(s)." );
         }
 
-        $lineItem = array( );
-        CRM_Price_BAO_Set::processAmount( $self->_values['fee']['fields'], $fields, $lineItem );
-        if ($fields['amount'] < 0) {
-          $errors['_qf_default'] = ts( "Event Fee(s) can not be less than zero. Please select the options accordingly" );
-        }
+		$lineItem = array( );
+		if ( is_array( $self->_values['fee']['fields'] ) ) {
+		  CRM_Price_BAO_Set::processAmount( $self->_values['fee']['fields'], $fields, $lineItem );
+		  if ($fields['amount'] < 0) {
+			$errors['_qf_default'] = ts( "Event Fee(s) can not be less than zero. Please select the options accordingly" );
+		  }
+		}
       }
       
       foreach ( $event_in_cart->participants as $mer_participant ) {

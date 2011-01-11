@@ -66,7 +66,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  'source'        => isset( $params['participant_source'] ) ?  $params['participant_source']:$params['description'],
 	  'fee_level'     => $participant->fee_level,
 	  'is_pay_later'  => CRM_Utils_Array::value( 'is_pay_later', $params, 0 ),
-	  'fee_amount'    => $participant->cost - $participant->discount_amount,
+	  'fee_amount'    => $params['amount'],
 	  'registered_by_id' => CRM_Utils_Array::value( 'registered_by_id', $params ),
 	  'discount_id'      => CRM_Utils_Array::value( 'discount_id', $params ),
 	  'fee_currency'     => CRM_Utils_Array::value( 'currencyID', $params )
@@ -321,6 +321,8 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   }
 
   function postProcess( ) {
+	require_once 'CRM/Core/Transaction.php';
+	$transaction = new CRM_Core_Transaction( );
 	$contact_id = parent::getContactID( );
 	$payment =& CRM_Core_Payment::singleton( $this->_mode, 'Event', $this->_paymentProcessor, $this );
 	$params = $this->_submitValues;
@@ -335,26 +337,99 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	if ( is_a( $result, 'CRM_Core_Error' ) ) {
 	  CRM_Core_Error::displaySessionError( $result );
 	  CRM_Utils_System::redirect( CRM_Utils_System::url( 'civicrm/event/cart_checkout', "_qf_Payment_display=1&qfKey={$this->controller->_key}", true, null, false ) );
+	  return;
 	}
+	$now = date( 'YmdHis' );
+	$trxnParams = array
+	(
+	  'trxn_date'         => $now,
+	  'trxn_type'         => 'Debit',
+	  'total_amount'      => $params['amount'],
+	  'fee_amount'        => CRM_Utils_Array::value( 'fee_amount', $result ),
+	  'net_amount'        => CRM_Utils_Array::value( 'net_amount', $result, $params['amount'] ), 
+	  'currency'          => $params['currencyID'],
+	  'payment_processor' => $this->_paymentProcessor['payment_processor_type'],
+	  'trxn_id'           => $result['trxn_id'],
+	);
+	require_once 'CRM/Core/BAO/FinancialTrxn.php';
+	$trxn = new CRM_Core_DAO_FinancialTrxn();
+	$trxn->copyValues($trxnParams);
+	require_once 'CRM/Utils/Rule.php';
+	if (! CRM_Utils_Rule::currencyCode($trxn->currency)) {
+	  require_once 'CRM/Core/Config.php';
+	  $config = CRM_Core_Config::singleton();
+	  $trxn->currency = $config->defaultCurrency;
+	}
+	$trxn->save();
+
+	$contribution_statuses = CRM_Contribute_PseudoConstant::contributionStatus( null, 'name' );
 	require_once 'CRM/Event/Form/Registration/Confirm.php';
-	if ($this->payment_required) {
-	  $contribution =& CRM_Event_Form_Registration_Confirm::processContribution( $this, $params, $result, $contact_id, false, false );
-	  $this->set( 'contributionID', $contribution->id );
-	  $params['contributionID'] = $contribution->id;
-	  $params['contributionTypeID'] = $contribution->contribution_type_id;
-	  $params['receive_date'] =  $contribution->receive_date;
-	  $params['trxn_id'] = $contribution->trxn_id;
-	}
 	$this->set( 'last_event_cart_id', $this->cart->id );
 	$this->cart->completed = true;
 	$this->cart->save( );
 	$participant_values = $this->getValuesForPage( 'ParticipantsAndPrices' ); 
+	$index = 0;
 	foreach ( $this->cart->events_in_carts as $event_in_cart ) {
 	  foreach ( $event_in_cart->participants as $participant ) {
+		$index += 1;
+		$params['amount'] = 0;
+		$params['contributionID'] = null;
+		$params['contributionTypeID'] = null;
+		$params['receive_date'] =  null;
+		$params['trxn_id'] = null;
+		if ( $this->payment_required ) {
+		  $params['amount'] = $participant->cost - $participant->discount_amount;
+		  $contribParams = array
+		  (
+			'contact_id' => $contact_id,
+			'contribution_type_id' => $event_in_cart->event->contribution_type_id,
+			'receive_date' => $now,
+			'total_amount' => $params['amount'],
+			'amount_level' => $participant->fee_level,
+			'fee_amount' => $params['amount'],
+			'net_amount' => $params['amount'],
+			'invoice_id' => "{$params['invoiceID']}-$index",
+			'trxn_id' => "{$trxn->trxn_id}-$index",
+			'currency' => $params['currencyID'],
+			'source' => $event_in_cart->event->title,
+			'contribution_status_id' => array_search( 'Completed', $contribution_statuses ),
+		  );
+		  $contribution =& CRM_Contribute_BAO_Contribution::add( $contribParams, $ids );
+		  require_once 'CRM/Core/CustomFieldUtil.php';
+		  require_once 'CRM/Core/BAO/CustomValueTable.php';
+		  $custom_values = array
+		  (
+			'entityID' => $event_in_cart->event->id,
+			'custom_2' => 1,
+		  );
+		  $result = CRM_Core_BAO_CustomValueTable::getValues( $custom_values );
+		  $event_gl_code = $result['custom_2'];
+		  $custom_values = array
+		  (
+			'entityID' => $contribution->id,
+			'custom_15' => $event_gl_code,
+		  );
+		  CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
+		  $params['contributionID'] = $contribution->id;
+		  $params['contributionTypeID'] = $contribution->contribution_type_id;
+		  $params['receive_date'] =  $contribution->receive_date;
+		  $params['trxn_id'] = $contribution->trxn_id;
+		  $entity_financial_trxn_params = array(
+			'entity_table'      => "civicrm_contribution",
+			'entity_id'         => $contribution->id,
+			'financial_trxn_id' => $trxn->id,
+			'amount'            => $params['amount'],
+			'currency'          => $trxn->currency,
+		  );
+		  $entity_trxn =& new CRM_Core_DAO_EntityFinancialTrxn();
+		  $entity_trxn->copyValues($entity_financial_trxn_params);
+		  $entity_trxn->save();
+		}
 		$this->addParticipant( $params, $participant, $event_in_cart->event_id );
 		//	$this->emailParticipant( $event_in_cart, $participant );
 	  }
 	}
+	$transaction->commit();
   }
 
   function setDefaultValues()
