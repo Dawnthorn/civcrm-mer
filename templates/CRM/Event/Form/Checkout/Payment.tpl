@@ -1,5 +1,11 @@
 {include file="CRM/common/TrackingFields.tpl"}
 
+<div class="crm-section {$form.billing_contact_email.name}-section">	
+<div class="label">{$form.billing_contact_email.label}</div>
+<div class="content">{$form.billing_contact_email.html}</div>
+<div class="clear"></div> 
+</div>
+
 <table>
   <thead>
     <tr>

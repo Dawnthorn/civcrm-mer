@@ -205,7 +205,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		);
 	  }
 	}
-
 	$this->total = $this->sub_total - $this->discount_amount_total;
 	$this->buildPaymentFields( );
 	if ($this->total == 0) $this->payment_required = false;
@@ -219,13 +218,18 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  'name' => ts('<< Go Back'),
 	  'spacing' => '&nbsp;&nbsp;&nbsp;&nbsp',
 	  'type' => 'back',
-	);
+	);	
 	$buttons[] = array(
 	  'isDefault' => true,
 	  'name' => ts('Complete Transaction >>'),
 	  'spacing' => '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
 	  'type' => 'next',
 	);
+
+  	global $user;
+  	if (in_array('administrator', array_values($user->roles))) {
+		$this->add('text', 'billing_contact_email', 'Billing Email','', true );
+  	}
 	$this->addButtons( $buttons );
 
 	$this->addFormRule( array( 'CRM_Event_Form_Checkout_Payment', 'formRule' ), $this );
@@ -291,12 +295,21 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   static function formRule( $fields, $files, $self ) 
   {
 	$errors = array( );
+
 	$payment =& CRM_Core_Payment::singleton( $self->_mode, 'Event', $self->_paymentProcessor, $this );
 	$error = $payment->checkConfig( $self->_mode );
 	if ( $error ) {
 	  $errors['_qf_default'] = $error;
 	}
 
+	// Validate that the billing contact email is valid
+	if ( CRM_Utils_Array::value( 'billing_contact_email', $fields ) ) {
+		$contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $fields['billing_contact_email'] );
+		if ($contact_details == NULL) {
+			$errors['billing_contact_email'] = ts( "Billing contact email does not appear to belong to a valid user." );
+		}
+	}
+	
 	foreach ( $self->_fields as $name => $field ) {
 	  if ( $field['is_required'] && CRM_Utils_System::isNull( CRM_Utils_Array::value( $name, $fields ) ) ) {
 		$errors[$name] = ts( '%1 is a required field.', array( 1 => $field['title'] ) );
@@ -321,9 +334,24 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   }
 
   function postProcess( ) {
+  	// TODO: Then in postProcess() where it sets the $contact_id variable, 
+  	// you need to change it so that it sets the contact_id to the contact id 
+  	// for the contact who's email address is in that field.
 	require_once 'CRM/Core/Transaction.php';
 	$transaction = new CRM_Core_Transaction( );
-	$contact_id = parent::getContactID( );
+	
+	if ( $fields['billing_contact_email'] ) {
+		// get the contact ID from $this->billing_contact_email
+		require_once 'CRM/Contact/BAO/Contact.php';
+		// $contact_id = parent::getContactID( );
+		// get contactID from email address
+		$contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $fields['billing_contact_email'] );
+		// var_dump( $contact_details ); die();
+		$contact_id = $contact_details->id;
+	} else {
+		$contact_id = parent::getContactID( );
+	}
+	
 	$payment =& CRM_Core_Payment::singleton( $this->_mode, 'Event', $this->_paymentProcessor, $this );
 	$params = $this->_submitValues;
 	CRM_Core_Payment_Form::mapParams( "", $params, $params, true );
@@ -398,7 +426,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		  );
 		  require_once 'CRM/Contribute/BAO/Contribution.php';
 		  $contribution =& CRM_Contribute_BAO_Contribution::add( $contribParams, $ids );
-		  require_once 'CRM/Core/CustomFieldUtil.php';
 		  require_once 'CRM/Core/BAO/CustomValueTable.php';
 		  $custom_values = array
 		  (
