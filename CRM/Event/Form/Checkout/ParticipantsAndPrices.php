@@ -116,4 +116,25 @@ class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Check
       return parent::preProcess( );
     }
   }
+
+  function postProcess( )
+  {
+	$is_conference = false;
+	$conference_participant_indexes = array( );
+	foreach ( $this->cart->events_in_carts as $event_in_cart ) {
+	  $event_in_cart->load_associations();
+	  if ( $event_in_cart->event->event_type_id == 1 ) {
+		$is_conference = true;
+		foreach ( $event_in_cart->participants as $mer_participant ) {
+		  $conference_participant_indexes[] = $mer_participant->index;
+		}
+		break;
+	  }
+	}
+	if ( $is_conference ) {
+	  $this->set( 'conference_participant_indexes', $conference_participant_indexes );
+	} else {
+	  $this->set( 'conference_participant_indexes', null );
+	}
+  }
 }

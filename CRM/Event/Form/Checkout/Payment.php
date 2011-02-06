@@ -15,20 +15,21 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   public $discount_amount_total = 0;
   public $payment_required = true;
 
-  function addParticipant( $params, $participant, $eventID ) 
+  function addParticipant( $params, $mer_participant, $event ) 
   {
 	require_once 'CRM/Core/Transaction.php';
 	require_once 'CRM/Contact/BAO/Contact.php';
 
-	$contact = CRM_Contact_BAO_Contact::matchContactOnEmail( $participant->email );
+	$eventID = $event->id;
 
+	$contact = CRM_Contact_BAO_Contact::matchContactOnEmail( $mer_participant->email );
 	if ($contact == null)
 	{
-	  $contact = $this->createNewContact( $participant );
+	  $contact = $this->createNewContact( $mer_participant );
 	}
 
 	$contactID = $contact->contact_id;
-	$participant->contact_id = $contact->contact_id;
+	$mer_participant->contact_id = $contact->contact_id;
 
 	$transaction = new CRM_Core_Transaction( );
 
@@ -50,7 +51,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	}
 
 	require_once 'CRM/Event/PseudoConstant.php';
-	if ( $participant->must_wait ) {
+	if ( $mer_participant->must_wait ) {
 	  $waiting_statuses = CRM_Event_PseudoConstant::participantStatus( null, "class = 'Waiting'" );
 	  $params['participant_status_id'] = array_search( 'On waitlist', $waiting_statuses );
 	}
@@ -97,9 +98,24 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  $paymentParticpant = CRM_Event_BAO_ParticipantPayment::create( $payment_params, $ids );
 	}
 
+	if ( $event->event_type_id == 1 ) {
+	  $this->addParticipantToConferenceEvents( $mer_participant, $participantParams );
+	}
+
 	$transaction->commit( );
 
 	return $participant;
+  }
+
+  function addParticipantToConferenceEvents( $mer_participant, $participantParams )
+  {
+	$conference_participants_events = $this->get( 'conference_participants_events' );
+	$mer_participants_events = $conference_participants_events[$mer_participant->index];
+	foreach ( $mer_participants_events as $event_id ) {
+	  $participantParams['event_id'] = $event_id;
+	  $participantParams['fee_amount'] = null;
+	  $participant = CRM_Event_BAO_Participant::create($participantParams);
+	}
   }
 
   function buildPaymentFields( )
@@ -235,7 +251,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$this->addFormRule( array( 'CRM_Event_Form_Checkout_Payment', 'formRule' ), $this );
   }
 
-  function createNewContact( $participant )
+  function createNewContact( $mer_participant )
   {
 	require_once 'CRM/Contact/BAO/Group.php';
 
@@ -256,13 +272,15 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  $params['current_employer_id'] = $registering_contact->employer_id;
 	}
 
-	$params['email-Primary'] = $participant->email;
-	$params['first_name'] = $participant->first_name;
-	$params['last_name'] = $participant->last_name;
+	$params['email-Primary'] = $mer_participant->email;
+	$params['first_name'] = $mer_participant->first_name;
+	$params['last_name'] = $mer_participant->last_name;
 	$fields = array( );
 
 	$contactID =& CRM_Contact_BAO_Contact::createProfileContact( $params, $fields, null, $add_to_groups );
-	$contact = CRM_Contact_BAO_Contact::matchContactOnEmail( $participant->email );
+	dlog("Foo1: {$mer_participant->email}: " . dlog_debug_var($contact));
+	$contact = CRM_Contact_BAO_Contact::matchContactOnEmail( $mer_participant->email );
+	dlog("Foo2: {$mer_participant->email}: " . dlog_debug_var($contact));
 	return $contact;
   }
 
@@ -400,7 +418,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$index = 0;
 	$participant_ids = array( );
 	foreach ( $this->cart->events_in_carts as $event_in_cart ) {
-	  foreach ( $event_in_cart->participants as $participant ) {
+	  foreach ( $event_in_cart->participants as $mer_participant ) {
 		$index += 1;
 		$params['amount'] = 0;
 		$params['contributionID'] = null;
@@ -408,14 +426,14 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$params['receive_date'] =  null;
 		$params['trxn_id'] = null;
 		if ( $this->payment_required ) {
-		  $params['amount'] = $participant->cost - $participant->discount_amount;
+		  $params['amount'] = $mer_participant->cost - $mer_participant->discount_amount;
 		  $contribParams = array
 		  (
 			'contact_id' => $contact_id,
 			'contribution_type_id' => $event_in_cart->event->contribution_type_id,
 			'receive_date' => $now,
 			'total_amount' => $params['amount'],
-			'amount_level' => $participant->fee_level,
+			'amount_level' => $mer_participant->fee_level,
 			'fee_amount' => $params['amount'],
 			'net_amount' => $params['amount'],
 			'invoice_id' => "{$params['invoiceID']}-$index",
@@ -455,7 +473,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		  $entity_trxn->copyValues($entity_financial_trxn_params);
 		  $entity_trxn->save();
 		}
-		$participant = $this->addParticipant( $params, $participant, $event_in_cart->event_id );
+		$participant = $this->addParticipant( $params, $mer_participant, $event_in_cart->event );
 		$participant_ids[] = $participant->id;
 		//	$this->emailParticipant( $event_in_cart, $participant );
 	  }
