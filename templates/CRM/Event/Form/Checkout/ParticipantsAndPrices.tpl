@@ -4,25 +4,25 @@
 
 {foreach from=$events_in_carts key=index item=event_in_cart}
   <fieldset class="event_form">
-    <legend>
+    <legend class="event-title">
       {$event_in_cart->event->title} ({$event_in_cart->event->start_date})
     </legend>
     <div class="participants" id="event_in_cart_{$event_in_cart->id}_participants">
       {foreach from=$event_in_cart->participants item=participant}
-	{include file="CRM/Event/Form/Checkout/Participant.tpl}
+	{include file="CRM/Event/Form/Checkout/Participant.tpl"}
       {/foreach}
     </div>
-    <a href="#" onclick="add_participant({$event_in_cart->id});">add another participant</a>
+    <a class="link-add" href="#" onclick="add_participant({$event_in_cart->id});">Add Another Participant</a>
     {if $event_in_cart->event->is_monetary }
       <div class="price_choices">
 	{assign var=event_id value=$event_in_cart->event_id}
 	{foreach from=$price_fields_for_event.$event_id key=price_index item=price_field_name}
-	  <div class="label">
-	    {$form.$price_field_name.label}
-	  </div>
-	  <div class="label">
-	    {$form.$price_field_name.html}
-	  </div>
+	    <h4>
+		{$form.$price_field_name.label}
+		</h4>
+		<div class="label">
+		  {$form.$price_field_name.html}
+		</div>
 	{/foreach}
       </div>
     {else}
