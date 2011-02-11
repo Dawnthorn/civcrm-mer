@@ -28,15 +28,15 @@ class CRM_Event_Form_Checkout_ConferenceEvents extends CRM_Event_Form_Checkout
 	$query = <<<EOS
 	  SELECT
 		civicrm_event.*,
-		civicrm_value_conference_6.conference_track_17 AS slot_name
+		civicrm_value_conference_6.conference_slot_18 AS slot_name
 	  FROM
 		civicrm_event
 	  JOIN
 		civicrm_value_conference_6 ON (civicrm_event.id = civicrm_value_conference_6.entity_id)
 	  WHERE
-		civicrm_value_conference_6.main_conference_event_id_16 = {$this->main_conference_event->id}
+		civicrm_value_conference_6.main_conference_event_id_17 = {$this->main_conference_event->id}
 	  ORDER BY
-		civicrm_value_conference_6.conference_track_17,
+		civicrm_value_conference_6.conference_slot_18,
 		civicrm_event.start_date
 EOS;
 	$events->query($query);
@@ -96,8 +96,6 @@ EOS;
 	  $field_name = "slot_$slot_index";
 	  $conference_participants_events[$this->mer_participant_index][] = $params[$field_name];
 	}
-	dlog("Foo: $this->mer_participant_index\n" );
-	dlog("Foo: " . dlog_debug_var($conference_participants_events));
 	$this->set( 'conference_participants_events', $conference_participants_events );
   }
 }
