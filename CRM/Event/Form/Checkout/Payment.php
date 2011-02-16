@@ -314,7 +314,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   {
 	$errors = array( );
 
-	$payment =& CRM_Core_Payment::singleton( $self->_mode, 'Event', $self->_paymentProcessor, $this );
+	$payment =& CRM_Core_Payment::singleton( $self->_mode, $self->_paymentProcessor, $this );
 	$error = $payment->checkConfig( $self->_mode );
 	if ( $error ) {
 	  $errors['_qf_default'] = $error;
@@ -370,7 +370,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$contact_id = parent::getContactID( );
 	}
 	
-	$payment =& CRM_Core_Payment::singleton( $this->_mode, 'Event', $this->_paymentProcessor, $this );
+	$payment =& CRM_Core_Payment::singleton( $this->_mode, $this->_paymentProcessor, $this );
 	$params = $this->_submitValues;
 	CRM_Core_Payment_Form::mapParams( "", $params, $params, true );
 	$params['contribution_type_id'] = $this->contribution_type_id;
