@@ -408,6 +408,8 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	}
 	$trxn->save();
 
+	$credit_card_types = array_flip(CRM_Core_OptionGroup::values('accept_creditcard')); 
+	$credit_card_type_id = $credit_card_types[$params['credit_card_type']];
 	$contribution_statuses = CRM_Contribute_PseudoConstant::contributionStatus( null, 'name' );
 	require_once 'CRM/Event/Form/Registration/Confirm.php';
 	$this->set( 'transaction_id', $trxn->id );
@@ -441,6 +443,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 			'currency' => $params['currencyID'],
 			'source' => $event_in_cart->event->title,
 			'contribution_status_id' => array_search( 'Completed', $contribution_statuses ),
+			'payment_instrument_id' => 1,
 		  );
 		  require_once 'CRM/Contribute/BAO/Contribution.php';
 		  $contribution =& CRM_Contribute_BAO_Contribution::add( $contribParams, $ids );
@@ -456,6 +459,12 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		  (
 			'entityID' => $contribution->id,
 			'custom_15' => $event_gl_code,
+		  );
+		  CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
+		  $custom_values = array
+		  (
+			'entityID' => $contribution->id,
+			'custom_26' => $credit_card_type_id,
 		  );
 		  CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
 		  $params['contributionID'] = $contribution->id;
