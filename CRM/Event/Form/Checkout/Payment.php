@@ -464,7 +464,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		  $custom_values = array
 		  (
 			'entityID' => $contribution->id,
-			'custom_26' => $credit_card_type_id,
+			'custom_28' => $credit_card_type_id,
 		  );
 		  CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
 		  $params['contributionID'] = $contribution->id;
