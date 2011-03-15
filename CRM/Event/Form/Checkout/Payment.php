@@ -278,9 +278,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$fields = array( );
 
 	$contactID =& CRM_Contact_BAO_Contact::createProfileContact( $params, $fields, null, $add_to_groups );
-	dlog("Foo1: {$mer_participant->email}: " . dlog_debug_var($contact));
 	$contact = CRM_Contact_BAO_Contact::matchContactOnEmail( $mer_participant->email );
-	dlog("Foo2: {$mer_participant->email}: " . dlog_debug_var($contact));
 	return $contact;
   }
 
