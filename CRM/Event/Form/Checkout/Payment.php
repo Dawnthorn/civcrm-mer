@@ -13,6 +13,8 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   public $sub_total;
   public $discounts = array();
   public $discount_amount_total = 0;
+  public $discount_code_uses = 0;
+  public $discount_code;
   public $payment_required = true;
 
   function addParticipant( $params, $mer_participant, $event ) 
@@ -156,6 +158,9 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$this->sub_total = 0;
 	$mer_participants_by_email = array();
 	$price_values = $this->getValuesForPage( 'ParticipantsAndPrices' );
+	$this->discount_code = $price_values["discountcode"];
+		
+	// iterate over each event in cart
 	foreach ( $this->cart->events_in_carts as $event_in_cart ) {
 	  $price_set_id = CRM_Price_BAO_Set::getFor( "civicrm_event", $event_in_cart->event_id );
 	  $amount_level = null;
@@ -176,7 +181,8 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$cost = $event_price_values['amount'];
 		$amount_level = $event_price_values['amount_level'];
 	  }
-
+	  
+	  // iterate over each paticipant in event
 	  foreach ($event_in_cart->participants as $mer_participant) {
 		$mer_participant->cost = $cost;
 		$mer_participant->fee_level = $amount_level;
@@ -185,6 +191,19 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		  $mer_pariticpants_by_email[$mer_participant->email] = array( );
 		}
 		$mer_participants_by_email[$mer_participant->email][] = $mer_participant;
+		
+		// discount validation and application
+		$event_id = $price_values["event_id"];
+		$discount = $this->get_discount_amount($this->discount_code,$event_in_cart->event_id,$mer_participant->cost);
+		if ($discount) {
+		  $participant_name = "{$mer_participant->first_name} {$mer_participant->last_name}";
+		  $this->discount_amount_total += $discount['amount'];
+		  $this->discounts[] = array(
+			'amount' => $discount['amount'],
+			'title' => $discount['type'].' discount ('.$this->discount_code.') for ' . $participant_name . ' (' . $mer_participant->email . ')',
+		  );
+		  $this->discount_code_uses++;
+		}
 	  }
 
 	  $num_participants = $event_in_cart->num_not_waiting_participants( );
@@ -198,11 +217,13 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		'num_waiting_participants' => $event_in_cart->num_waiting_participants( ),
 		'waiting_participants' => $event_in_cart->waiting_participants( ),
 	  );
+	  
 	  $this->sub_total += $amount;
 	}
 
-	/* apply discount */
+	/* apply discounts */
 	foreach ($mer_participants_by_email as $participant_email => $mer_participants) {
+	  // auto discount
 	  if ( count( $mer_participants ) >= 3 )
 	  {
 		$participant_name = null;
@@ -350,19 +371,17 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   }
 
   function postProcess( ) {
-  	// TODO: Then in postProcess() where it sets the $contact_id variable, 
-  	// you need to change it so that it sets the contact_id to the contact id 
-  	// for the contact who's email address is in that field.
 	require_once 'CRM/Core/Transaction.php';
 	$transaction = new CRM_Core_Transaction( );
+	
+	// mark redemptions of discount code
+	$this->redeem_discount();
 	
 	if ( $fields['billing_contact_email'] ) {
 		// get the contact ID from $this->billing_contact_email
 		require_once 'CRM/Contact/BAO/Contact.php';
-		// $contact_id = parent::getContactID( );
 		// get contactID from email address
 		$contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $fields['billing_contact_email'] );
-		// var_dump( $contact_details ); die();
 		$contact_id = $contact_details->id;
 	} else {
 		$contact_id = parent::getContactID( );
@@ -511,5 +530,47 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  }
 	}
 	return $defaults;
+  }
+  
+  /** 
+   * Calculate discount code amounts to apply
+   */
+  function get_discount_amount($code,$eventID,$price) {
+    $discount = array();
+	$query = "SELECT cid, code, description, amount, amount_type, events, pricesets, memberships, organization, autodiscount, count_use, count_max, expiration FROM {civievent_discount} WHERE code = '".stripslashes($code)."'";
+	$result = db_query($query);
+	$row = db_fetch_array($result, MYSQL_ASSOC);
+	
+    if (!$row) {
+      $errors['discountcode'] = ts('Discount code is invalid.');
+    }
+    $events = unserialize($row['events']); 
+    if (! empty($events) ) {
+      if ($row['expiration'] && (time() > strtotime($row['expiration']))) {
+      	$errors['discountcode'] = ts('Code has expired.');
+      } else if ($row['count_use'] + $this->discount_code_uses >= $row["count_max"]) {
+        $errors['discountcode'] = ts('Max uses exceeded for discount code.');
+      } else if (! in_array($eventID,$events) ) {
+      	$errors['discountcode'] = ts('Code not valid for this event.');      
+      } else {
+        // get the discount amount
+        if ($row['amount_type'] == 'P') {
+          // calculate percentage discount
+          $discount['amount'] =  $price * ($row['amount'] * .01);
+          $discount['type'] = $row['amount'].'%';
+        } else if ($row['amount_type'] == 'M') {
+          // do a straight subtraction.
+          $discount['amount'] = $row['amount'];
+          $discount['type'] = '$'.$row['amount'];
+        }
+      }
+    }
+    return $discount;
+  }
+  
+  function redeem_discount()
+  {
+    $query = "UPDATE {civievent_discount} SET count_use = count_use + ".addslashes($this->discount_code_uses)." WHERE code = '".addslashes($this->discount_code)."' LIMIT 1;";
+    db_query($query);
   }
 }

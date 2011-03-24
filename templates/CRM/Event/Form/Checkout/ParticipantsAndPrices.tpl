@@ -30,7 +30,7 @@
     {/if}
   </fieldset>
 {/foreach}
-
+<p>{$form.discountcode.label}: {$form.discountcode.html}</p>
 <div id="crm-submit-buttons" class="crm-submit-buttons">
   {include file="CRM/common/formButtons.tpl" location="bottom"}
 </div>

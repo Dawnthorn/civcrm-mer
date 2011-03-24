@@ -5,7 +5,7 @@ require_once 'CRM/Core/OptionGroup.php';
 require_once 'CRM/Event/BAO/Cart.php';
 require_once 'CRM/Event/Form/Checkout.php';
 require_once 'CRM/Price/BAO/Set.php';
-
+      
 class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Checkout
 {
   public $price_fields_for_event;
@@ -44,6 +44,7 @@ class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Check
         }
       }
     }
+    $this->addElement('text', 'discountcode', ts('If you have a discount code, enter it here'));
     $this->assign( 'events_in_carts', $this->cart->events_in_carts );
     $this->assign( 'price_fields_for_event', $this->price_fields_for_event );
     $this->addButtons( 
@@ -60,6 +61,16 @@ class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Check
   static function formRule( $fields, $files, $self )
   {
     $errors = array();
+    
+    if (! empty($fields['discountcode'])) {
+      // check to see if the code exists
+      $query = "SELECT cid FROM {civievent_discount} WHERE code = '".stripslashes($fields['discountcode'])."'";
+	  $result = db_query($query);
+	  $row = db_fetch_array($result);
+	  if (empty($row)) {
+	    $errors['discountcode'] = ts( "The discount code you've entered does not appear to be valid." );
+	  }
+    }
     
     foreach ( $self->cart->events_in_carts as $event_in_cart ) {
       $price_set_id = CRM_Price_BAO_Set::getFor( "civicrm_event", $event_in_cart->event_id );
