@@ -306,6 +306,9 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 
   function emailParticipant( $contact_id, $event_in_cart, $participant )
   {
+	if ( !$event_in_cart->event->is_email_confirm ) {
+	  return;
+	}
 	require_once 'CRM/Contact/BAO/Contact.php';
 	require_once 'CRM/Core/BAO/MessageTemplates.php';
 	$params = array
@@ -323,12 +326,23 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  'email' => $payer_contact_details[1],
 	  'name' => $payer_contact_details[0],
 	);
+	$from = "{$event_values['confirm_from_name']} <{$event_values['confirm_from_email']}>";
+	if (!$event_values['confirm_from_email']) {
+	  require_once 'CRM/Core/OptionGroup.php';
+	  $values = CRM_Core_OptionGroup::values('from_email_address');
+	  $from = $values[1];
+	}
 	$send_template_params = array
 	(
-	  'groupName' => 'msg_tpl_workflow_event',
-	  'valueName' => 'event_online_receipt',
+	  'autoSubmitted' => true,
+	  'bcc' => CRM_Utils_Array::value( 'bcc_confirm',  $event_values ),
+	  'cc' => CRM_Utils_Array::value( 'cc_confirm',  $event_values ),
 	  'contactId' => $participant->contact_id,
 	  'isTest' => false,
+	  'from' => $from,
+	  'groupName' => 'msg_tpl_workflow_event',
+	  'toEmail' => $contact_details[1],
+	  'toName' => $contact_details[0],
 	  'tplParams' => array
 	  (
 		'email' => $contact_details[1],
@@ -342,9 +356,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		'participant' => $participant,
 		'payer' => $payer_values,
 	  ),
-	  'toName' => $contact_details[0],
-	  'toEmail' => $contact_details[1],
-	  'autoSubmitted' => true,
+	  'valueName' => 'event_online_receipt',
 	);
 	CRM_Core_BAO_MessageTemplates::sendTemplate( $send_template_params );
   }
