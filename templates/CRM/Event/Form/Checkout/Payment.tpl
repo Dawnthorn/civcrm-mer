@@ -22,7 +22,7 @@
 	Amount
       </th>
     </tr>
-  <thead>
+  </thead>
   <tbody>
     {foreach from=$line_items item=line_item}
       <tr>

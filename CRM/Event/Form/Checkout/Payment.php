@@ -7,6 +7,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 {
   public $contribution_type_id;
   public $description;
+  public $line_items;
   public $_fields = array();
   public $_paymentProcessor;
   public $total;
@@ -154,7 +155,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 
   function buildQuickForm( )
   {
-	$line_items = array();
+	$this->line_items = array();
 	$this->sub_total = 0;
 	$mer_participants_by_email = array();
 	$price_values = $this->getValuesForPage( 'ParticipantsAndPrices' );
@@ -208,7 +209,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 
 	  $num_participants = $event_in_cart->num_not_waiting_participants( );
 	  $amount = $cost * $num_participants;
-	  $line_items[] = array( 
+	  $this->line_items[] = array( 
 		'amount' => $amount,
 		'cost' => $cost,
 		'event' => $event_in_cart->event,
@@ -246,7 +247,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$this->buildPaymentFields( );
 	if ($this->total == 0) $this->payment_required = false;
 	$this->assign( 'payment_required', $this->payment_required );
-	$this->assign( 'line_items', $line_items );
+	$this->assign( 'line_items', $this->line_items );
 	$this->assign( 'sub_total', $this->sub_total );
 	$this->assign( 'total', $this->total );
 	$this->assign( 'discounts', $this->discounts);
@@ -305,8 +306,17 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 
   function emailParticipant( $event_in_cart, $participant )
   {
+	require_once 'CRM/Contact/BAO/Contact.php';
 	require_once 'CRM/Core/BAO/MessageTemplates.php';
-	$event = $event_in_cart->event;
+	$params = array
+	(
+	  'entity_id' => $event_in_cart->event->id,
+	  'entity_table' => 'civicrm_event',
+	);
+	$location_values = CRM_Core_BAO_Location::getValues( $params, true );
+	$event_values = array( );
+	CRM_Core_DAO::storeValues( $event_in_cart->event, $event_values );
+	$contact_details = CRM_Contact_BAO_Contact::getContactDetails( $participant->contact_id );
 	$send_template_params = array
 	(
 	  'groupName' => 'msg_tpl_workflow_event',
@@ -315,18 +325,48 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  'isTest' => false,
 	  'tplParams' => array
 	  (
-		'email' => $participant->email,
-		'confirm_email_text' => $event->confirm_email_text,
-		'isShowLocation' => $event->is_show_location,
+		'email' => $contact_details[1],
+		'event' => $event_values,
+		'is_pay_later' => false,
+		'isOnWaitlist' => $participant->must_wait,
+		'isShowLocation' => true,
+		'isRequireApproval' => false,
+		'location' => $location_values,
+		'name' => $contact_details[0],
+		'participant' => $participant,
 	  ),
-	  'from' => "{$event->confirm_from_name} <{$event->confirm_from_email}>",
-	  'toName' => "{$participant->first_name} {$partcipant->last_name}",
-	  'toEmail' => $participant->email,
+	  'toName' => $contact_details[0],
+	  'toEmail' => $contact_details[1],
 	  'autoSubmitted' => true,
-	  'cc' => $event->cc_confirm,
-	  'bcc' => $event->bcc_confirm,
 	);
-	CRM_Core_BAO_MessageTemplates::sendTemplate($send_template_params);
+	CRM_Core_BAO_MessageTemplates::sendTemplate( $send_template_params );
+  }
+
+  function emailReceipt( $contact_id, $events_in_cart, $transaction_id )
+  {
+	require_once 'CRM/Contact/BAO/Contact.php';
+	require_once 'CRM/Core/BAO/MessageTemplates.php';
+	$contact_details = CRM_Contact_BAO_Contact::getContactDetails( $contact_id );
+	$send_template_params = array
+	(
+	  'groupName' => 'msg_tpl_workflow_event',
+	  'valueName' => 'event_registration_receipt',
+	  'contactId' => $contact_id,
+	  'isTest' => false,
+	  'tplParams' => array
+	  (
+		'discounts' => $this->discounts,
+		'email' => $contact_details[1],
+		'events_in_cart' => $events_in_cart,
+		'line_items' => $this->line_items,
+		'name' => $contact_details[0],
+		'transaction_id' => $transaction_id,
+	  ),
+	  'toName' => $contact_details[0],
+	  'toEmail' => $contact_details[1],
+	  'autoSubmitted' => true,
+	);
+	CRM_Core_BAO_MessageTemplates::sendTemplate( $send_template_params );
   }
 
   static function formRule( $fields, $files, $self ) 
@@ -425,6 +465,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	}
 	$trxn->save();
 
+
 	$credit_card_types = array_flip(CRM_Core_OptionGroup::values('accept_creditcard')); 
 	$credit_card_type_id = $credit_card_types[$params['credit_card_type']];
 	$contribution_statuses = CRM_Contribute_PseudoConstant::contributionStatus( null, 'name' );
@@ -433,6 +474,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$this->set( 'last_event_cart_id', $this->cart->id );
 	$this->cart->completed = true;
 	$this->cart->save( );
+	$this->emailReceipt( $contact_id, $this->events_in_carts, $trxn->id );
 	$participant_values = $this->getValuesForPage( 'ParticipantsAndPrices' ); 
 	$index = 0;
 	$participant_ids = array( );
@@ -501,7 +543,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		}
 		$participant = $this->addParticipant( $params, $mer_participant, $event_in_cart->event );
 		$participant_ids[] = $participant->id;
-		//	$this->emailParticipant( $event_in_cart, $participant );
+		$this->emailParticipant( $event_in_cart, $participant );
 	  }
 	}
 	$this->set( 'participant_ids', $participant_ids );
