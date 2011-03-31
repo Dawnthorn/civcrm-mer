@@ -610,26 +610,25 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
       $errors['discountcode'] = ts('Discount code is invalid.');
     }
     $events = unserialize($row['events']); 
-    if (! empty($events) ) {
-      if ($row['expiration'] && (time() > strtotime($row['expiration']))) {
-      	$errors['discountcode'] = ts('Code has expired.');
-      } else if ($row['count_use'] + $this->discount_code_uses >= $row["count_max"]) {
-        $errors['discountcode'] = ts('Max uses exceeded for discount code.');
-      } else if (! in_array($eventID,$events) ) {
-      	$errors['discountcode'] = ts('Code not valid for this event.');      
-      } else {
-        // get the discount amount
-        if ($row['amount_type'] == 'P') {
-          // calculate percentage discount
-          $discount['amount'] =  $price * ($row['amount'] * .01);
-          $discount['type'] = $row['amount'].'%';
-        } else if ($row['amount_type'] == 'M') {
-          // do a straight subtraction.
-          $discount['amount'] = $row['amount'];
-          $discount['type'] = '$'.$row['amount'];
-        }
-      }
-    }
+	if ($row['expiration'] && (time() > strtotime($row['expiration']))) {
+	  $errors['discountcode'] = ts('Code has expired.');
+	} else if ($row['count_use'] && ($row['count_use'] + $this->discount_code_uses >= $row["count_max"])) {
+	  $errors['discountcode'] = ts('Max uses exceeded for discount code.');
+	} else if (! empty($events) && ! in_array($eventID,$events) ) {
+	  $errors['discountcode'] = ts('Code not valid for this event.');      
+	} else {
+	  // get the discount amount
+	  if ($row['amount_type'] == 'P') {
+		// calculate percentage discount
+		$discount['amount'] =  $price * ($row['amount'] * .01);
+		$discount['type'] = $row['amount'].'%';
+	  } else if ($row['amount_type'] == 'M') {
+		// do a straight subtraction.
+		$discount['amount'] = $row['amount'];
+		$discount['type'] = '$'.$row['amount'];
+	  }
+	}
+    
     return $discount;
   }
   
