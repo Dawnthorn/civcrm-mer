@@ -304,7 +304,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	return $contact;
   }
 
-  function emailParticipant( $event_in_cart, $participant )
+  function emailParticipant( $contact_id, $event_in_cart, $participant )
   {
 	require_once 'CRM/Contact/BAO/Contact.php';
 	require_once 'CRM/Core/BAO/MessageTemplates.php';
@@ -317,6 +317,12 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$event_values = array( );
 	CRM_Core_DAO::storeValues( $event_in_cart->event, $event_values );
 	$contact_details = CRM_Contact_BAO_Contact::getContactDetails( $participant->contact_id );
+	$payer_contact_details = CRM_Contact_BAO_Contact::getContactDetails( $contact_id );
+	$payer_values = array
+	(
+	  'email' => $payer_contact_details[1],
+	  'name' => $payer_contact_details[0],
+	);
 	$send_template_params = array
 	(
 	  'groupName' => 'msg_tpl_workflow_event',
@@ -334,6 +340,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		'location' => $location_values,
 		'name' => $contact_details[0],
 		'participant' => $participant,
+		'payer' => $payer_values,
 	  ),
 	  'toName' => $contact_details[0],
 	  'toEmail' => $contact_details[1],
@@ -543,7 +550,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		}
 		$participant = $this->addParticipant( $params, $mer_participant, $event_in_cart->event );
 		$participant_ids[] = $participant->id;
-		$this->emailParticipant( $event_in_cart, $participant );
+		$this->emailParticipant( $contact_id, $event_in_cart, $participant );
 	  }
 	}
 	$this->set( 'participant_ids', $participant_ids );
