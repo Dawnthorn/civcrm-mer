@@ -179,6 +179,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$price_set = $price_sets[$price_set_id];
 		$price_set_amount = array( );
 		CRM_Price_BAO_Set::processAmount( $price_set['fields'], $event_price_values, $price_set_amount );
+		$price_set_index = end(array_keys($event_price_values['amount_priceset_level_radio']));
 		$cost = $event_price_values['amount'];
 		$amount_level = $event_price_values['amount_level'];
 	  }
@@ -195,7 +196,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		
 		// discount validation and application
 		$event_id = $price_values["event_id"];
-		$discount = $this->get_discount_amount($this->discount_code,$event_in_cart->event_id,$mer_participant->cost);
+		$discount = $this->get_discount_amount($this->discount_code,$event_in_cart->event_id,$mer_participant->cost,$price_set_index);
 		if ($discount) {
 		  $participant_name = "{$mer_participant->first_name} {$mer_participant->last_name}";
 		  $this->discount_amount_total += $discount['amount'];
@@ -600,7 +601,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   /** 
    * Calculate discount code amounts to apply
    */
-  function get_discount_amount($code,$eventID,$price) {
+  function get_discount_amount($code,$eventID,$price,$priceSetID) {
     $discount = array();
 	$query = "SELECT cid, code, description, amount, amount_type, events, pricesets, memberships, organization, autodiscount, count_use, count_max, expiration FROM {civievent_discount} WHERE code = '".stripslashes($code)."'";
 	$result = db_query($query);
@@ -610,12 +611,15 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
       $errors['discountcode'] = ts('Discount code is invalid.');
     }
     $events = unserialize($row['events']); 
+    $priceSets = unserialize($row['pricesets']);
 	if ($row['expiration'] && (time() > strtotime($row['expiration']))) {
 	  $errors['discountcode'] = ts('Code has expired.');
 	} else if ($row['count_use'] && ($row['count_use'] + $this->discount_code_uses >= $row["count_max"])) {
 	  $errors['discountcode'] = ts('Max uses exceeded for discount code.');
 	} else if (! empty($events) && ! in_array($eventID,$events) ) {
-	  $errors['discountcode'] = ts('Code not valid for this event.');      
+	  $errors['discountcode'] = ts('Code not valid for this event.');  
+	} else if (! empty($priceSets) && ! in_array($priceSetID, $priceSets) ) {
+	  $errors['discountcode'] = ts('Code not valid for this price set.');
 	} else {
 	  // get the discount amount
 	  if ($row['amount_type'] == 'P') {
