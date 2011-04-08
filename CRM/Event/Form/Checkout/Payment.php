@@ -612,7 +612,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
     }
     $events = unserialize($row['events']); 
     $priceSets = unserialize($row['pricesets']);
-	if ($row['expiration'] && (time() > strtotime($row['expiration']))) {
+	if (intval($row['expiration']) > 0 && (time() > strtotime($row['expiration']))) {
 	  $errors['discountcode'] = ts('Code has expired.');
 	} else if ($row['count_use'] && ($row['count_use'] + $this->discount_code_uses >= $row["count_max"])) {
 	  $errors['discountcode'] = ts('Max uses exceeded for discount code.');
