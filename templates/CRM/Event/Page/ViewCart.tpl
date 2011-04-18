@@ -20,4 +20,5 @@
     {/foreach}
   </tbody>
 </table>
-<a href="{$checkout_url}">Checkout</a>
+<a href="{$checkout_url}"><img src="/sites/all/themes/compasspoint/images/cart.gif" />Check Out</a><br /><br />
+<a href="/workshops">&laquo; Back to Workshop Catalog</a>

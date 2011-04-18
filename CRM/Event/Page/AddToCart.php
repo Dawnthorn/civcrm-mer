@@ -18,7 +18,7 @@ class CRM_Event_Page_AddToCart extends CRM_Core_Page {
     $params = array( 'id' => $this->_id );
     CRM_Event_BAO_Event::retrieve( $params, $values['event'] );
 	$cart->add_event( $values['event']['id'] );
-    CRM_Core_Session::setStatus( ts("%1 has been added to your cart.", array( 1 => $values['event']['title'] ) ) );
+    CRM_Core_Session::setStatus( ts("%1 has been added to your cart. <a href='/civicrm/event/view_cart'>View your cart.</a>", array( 1 => $values['event']['title'] ) ) );
 
     return CRM_Utils_System::redirect( $_SERVER['HTTP_REFERER'] );
   }
