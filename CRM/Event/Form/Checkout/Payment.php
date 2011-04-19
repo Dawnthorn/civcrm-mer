@@ -366,7 +366,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	CRM_Core_BAO_MessageTemplates::sendTemplate( $send_template_params );
   }
 
-  function emailReceipt( $contact_id, $events_in_cart, $transaction_id )
+  function emailReceipt( $contact_id, $events_in_cart, $trxn )
   {
 	require_once 'CRM/Contact/BAO/Contact.php';
 	require_once 'CRM/Core/BAO/MessageTemplates.php';
@@ -386,7 +386,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		'events_in_cart' => $events_in_cart,
 		'line_items' => $this->line_items,
 		'name' => $contact_details[0],
-		'transaction_id' => $transaction_id,
+		'trxn' => $trxn,
 	  ),
 	  'valueName' => 'event_registration_receipt',
 	);
@@ -498,7 +498,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$this->set( 'last_event_cart_id', $this->cart->id );
 	$this->cart->completed = true;
 	$this->cart->save( );
-	$this->emailReceipt( $contact_id, $this->events_in_carts, $trxn->id );
+	$this->emailReceipt( $contact_id, $this->events_in_carts, $trxn );
 	$participant_values = $this->getValuesForPage( 'ParticipantsAndPrices' ); 
 	$index = 0;
 	$participant_ids = array( );
