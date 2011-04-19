@@ -48,10 +48,10 @@
 	  {/if}
 	</td>
 	<td class="cost">
-	  {$line_item.cost}
+	  {$line_item.cost|crmMoney:$currency|string_format:"%10s"}
 	</td>
 	<td class="amount">
-	  &nbsp;{$line_item.amount}
+	  &nbsp;{$line_item.amount|crmMoney:$currency|string_format:"%10s"}
 	</td>
       </tr>
     {/foreach}
@@ -67,7 +67,7 @@
 	Subtotal:
       </td>
       <td>
-	&nbsp;{$sub_total}
+	&nbsp;{$sub_total|crmMoney:$currency|string_format:"%10s"}
       </td>
     </tr>  
   {foreach from=$discounts key=myId item=i}
@@ -79,7 +79,7 @@
       <td>
       </td>
       <td>
-   -{$i.amount}
+   -{$i.amount|crmMoney:$currency|string_format:"%10s"}
       </td>
     </tr>
    {/foreach} 
@@ -93,7 +93,7 @@
 	Total:
       </td>
       <td class="total">
-	&nbsp;{$total}
+	&nbsp;{$total|crmMoney:$currency|string_format:"%10s"}
       </td>
     </tr>
   </tfoot>
