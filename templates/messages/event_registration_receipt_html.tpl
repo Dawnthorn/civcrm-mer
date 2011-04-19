@@ -15,17 +15,16 @@ made at CompassPoint Nonprofit Services.</p>
 
 	<p>Your order number is #{$trxn->trxn_id}. Please print this confirmation for your records. Information about the workshops will be sent separately to each participant.
 Here's a summary of your transaction placed on {$trxn->trxn_date|date_format:"%D %I:%M %p %Z"}:</p>
-
-===========================================================
-{ts}Billing Name and Address{/ts}
-
-===========================================================
-{$billingName}
-{$address}
-
-{$email}
-
-
+	<p>
+	  ===========================================================
+	  {ts}Billing Name and Address{/ts}
+	  ===========================================================
+	</p>
+	<p>
+	  {$billingName}<br />
+	  {$address}<br /><br />
+	  {$email}
+	</p>
     <table>
       <thead>
 		<tr style="border-bottom: 1px solid #ccc">
@@ -128,33 +127,36 @@ Here's a summary of your transaction placed on {$trxn->trxn_date|date_format:"%D
 		  </tr>
 		{/foreach}
 	  {/if}
-	  <tr>
-	  <td>
-	  </td>
-	  <td>
-	  </td>
-	  <td>
-	    <strong>Total:</strong>
-	  </td>
-	  <td>
-	    <strong>&nbsp;{$total|crmMoney:$currency|string_format:"%10s"}</strong>
-	  </td>
-	</tr>
+		<tr>
+		  <td>
+		  </td>
+		  <td>
+		  </td>
+		  <td>
+			<strong>Total:</strong>
+		  </td>
+		  <td>
+			<strong>&nbsp;{$total|crmMoney:$currency|string_format:"%10s"}</strong>
+		  </td>
+		</tr>
       </tfoot>
     </table>
+		
+	<p>
+	  ===========================================================
+	  {ts}Payment Information{/ts}
+	  ===========================================================
+	</p>
+	<p>
+	  {$credit_card_type}<br />
+	  {$credit_card_number}<br />
+	  {ts}Expires{/ts}: {$credit_card_exp_date|truncate:7:''|crmDate}
+	</p>
 	
-===========================================================
-{ts}Payment Information{/ts}
-
-===========================================================
-{$credit_card_type}
-{$credit_card_number}
-{ts}Expires{/ts}: {$credit_card_exp_date|truncate:7:''|crmDate}
-
-<p><strong>Comments:</strong> If you are paying by check, please send payments to CompassPoint Nonprofit Services, 731 Market
-Street, Suite 200, San Francisco, CA 94103 501c Tax Deductible</p>
-
-<p>If you have questions about the status of your registration or purchase please visit: www.compasspoint.org or call
-415.541.9000.</p>
+	<p><strong>Comments:</strong> If you are paying by check, please send payments to CompassPoint Nonprofit Services, 731 Market
+	Street, Suite 200, San Francisco, CA 94103 501c Tax Deductible</p>
+	
+	<p>If you have questions about the status of your registration or purchase please visit: www.compasspoint.org or call
+	415.541.9000.</p>
   </body>
 </html>
