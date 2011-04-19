@@ -199,6 +199,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$discount = $this->get_discount_amount($this->discount_code,$event_in_cart->event_id,$mer_participant->cost,$price_set_index);
 		if ($discount) {
 		  $participant_name = "{$mer_participant->first_name} {$mer_participant->last_name}";
+		  $mer_participant->discount_amount += $discount['amount'];
 		  $this->discount_amount_total += $discount['amount'];
 		  $this->discounts[] = array(
 			'amount' => $discount['amount'],
@@ -222,7 +223,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  
 	  $this->sub_total += $amount;
 	}
-
 	/* apply discounts */
 	foreach ($mer_participants_by_email as $participant_email => $mer_participants) {
 	  // auto discount
@@ -233,7 +233,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		foreach ( $mer_participants as $mer_participant )
 		{
 		  $orig_cost = $mer_participant->cost;
-		  $mer_participant->discount_amount = round($mer_participant->cost * 0.20, 2);
+		  $mer_participant->discount_amount += round($mer_participant->cost * 0.20, 2);
 		  $total_discount_for_participant += $mer_participant->discount_amount;
 		  $participant_name = "{$mer_participant->first_name} {$mer_participant->last_name}";
 		}
@@ -519,7 +519,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 			'receive_date' => $now,
 			'total_amount' => $params['amount'],
 			'amount_level' => $mer_participant->fee_level,
-			'fee_amount' => $params['amount'],
+			'fee_amount' => $mer_participant->cost,
 			'net_amount' => $params['amount'],
 			'invoice_id' => "{$params['invoiceID']}-$index",
 			'trxn_id' => "{$trxn->trxn_id}-$index",
