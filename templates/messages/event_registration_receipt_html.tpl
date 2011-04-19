@@ -8,101 +8,153 @@
     {capture assign=headerStyle}colspan="2" style="text-align: left; padding: 4px; border-bottom: 1px solid #999; background-color: #eee;"{/capture}
     {capture assign=labelStyle }style="padding: 4px; border-bottom: 1px solid #999; background-color: #f7f7f7;"{/capture}
     {capture assign=valueStyle }style="padding: 4px; border-bottom: 1px solid #999;"{/capture}
-    <p>{ts}Please print this confirmation for your records. Information about
-      the workshops will be sent separately to each participant.{/ts}</p>
-    <b>Transaction ID:</b> {$transaction_id}
+    
+	<p>Dear {contact.display_name},</p>
+	<p>This is being sent to you as a receipt of payment made for the following workshop, event registration or purchase
+made at CompassPoint Nonprofit Services.</p>
+
+	<p>Your order number is #{$trxn->trxn_id}. Please print this confirmation for your records. Information about the workshops will be sent separately to each participant.
+Here's a summary of your transaction placed on {$trxn->trxn_date|date_format:"%D %I:%M %p %Z"}:</p>
+
+===========================================================
+{ts}Billing Name and Address{/ts}
+
+===========================================================
+{$billingName}
+{$address}
+
+{$email}
+
+
     <table>
       <thead>
-	<tr>
-	  <th>
-	    Event
-	  </th>
-	  <th>
-	    Participants
-	  </th>
-	  <th>
-	    Cost
-	  </th>
-	  <th>
-	    Amount
-	  </th>
-	</tr>
+		<tr style="border-bottom: 1px solid #ccc">
+		  <th>
+			Event
+		  </th>
+		  <th>
+			Participants
+		  </th>
+		  <th>
+			Price
+		  </th>
+		  <th>
+			Quantity
+		  </th>
+		  <th>
+			Total
+		  </th>
+		</tr>
       </thead>
       <tbody>
-	{foreach from=$line_items item=line_item}
-	  <tr>
-	    <td>
-	      {$line_item.event->title} ({$line_item.event->start_date})
-	    </td>
-	    <td>
-	      {$line_item.num_participants}<br/>
-	      {if $line_item.num_participants > 0}
-		<div class="participants" style="padding-left: 10px;">
-		  {foreach from=$line_item.participants item=participant}
-		    {$participant->first_name} {$participant->last_name}
-		  {/foreach}
-		</div>
-	      {/if}
-	      {if $line_item.num_waiting_participants > 0}
-		Waitlisted:<br/>
-		<div class="participants" style="padding-left: 10px;">
-		  {foreach from=$line_item.waiting_participants item=participant}
-		    {$participant->first_name} {$participant->last_name}
-		  {/foreach}
-		</div>
-	      {/if}
-	    </td>
-	    <td>
-	      {$line_item.cost}
-	    </td>
-	    <td>
-	      &nbsp;{$line_item.amount}
-	    </td>
-	  </tr>
-	{/foreach}
+	  {foreach from=$line_items item=line_item}
+		<tr>
+		  <td>
+			{$line_item.event->title} ({$line_item.event->start_date|date_format:"%D"})<br />
+			{if $isShowLocation}
+			  {if $location.address.1.name}
+				{$location.address.1.name}
+			  {/if}
+			  {if $location.address.1.street_address}
+				{$location.address.1.street_address}
+			  {/if}
+			  {if $location.address.1.supplemental_address_1}
+				{$location.address.1.supplemental_address_1}
+			  {/if}
+			  {if $location.address.1.supplemental_address_2}
+				{$location.address.1.supplemental_address_2}
+			  {/if}
+			  {if $location.address.1.city}
+				{$location.address.1.city} {$location.address.1.postal_code}
+			  {/if}
+			{/if}{*End of isShowLocation condition*}<br /><br />
+			{$line_item.event->start_date|date_format:"%D %I:%M %p"} - {$line_item.event->end_date|date_format:"%I:%M %p"}
+		  </td>
+		  <td>
+			{if $line_item.num_participants > 0}
+			  <div class="participants" style="padding-left: 10px;">
+				{foreach from=$line_item.participants item=participant}
+				  {$participant->first_name} {$participant->last_name}<br />
+				{/foreach}
+			  </div>
+			{/if}
+			{if $line_item.num_waiting_participants > 0}
+			  Waitlisted:<br/>
+			  <div class="participants" style="padding-left: 10px;">
+				{foreach from=$line_item.waiting_participants item=participant}
+				  {$participant->first_name} {$participant->last_name}<br />
+				{/foreach}
+			  </div>
+			{/if}
+		  </td>
+		  <td>
+			{$line_item.cost|crmMoney:$currency|string_format:"%10s"}
+		  </td>
+		  <td>
+			{$line_item.num_participants}
+		  </td>
+		  <td>
+			&nbsp;{$line_item.amount|crmMoney:$currency|string_format:"%10s"}
+		  </td>
+		</tr>
+	  {/foreach}
       </tbody>
       <tfoot>
-	{if $discounts}
+	  {if $discounts}
+		<tr>
+		  <td>
+		  </td>
+		  <td>
+		  </td>
+		  <td>
+			Subtotal:
+		  </td>
+		  <td>
+			&nbsp;{$sub_total|crmMoney:$currency|string_format:"%10s"}
+		  </td>
+		</tr>
+		{foreach from=$discounts key=myId item=i}
+		  <tr>
+			<td>
+		  {$i.title}
+			</td>
+			<td>
+			</td>
+			<td>
+			</td>
+			<td>
+		  -{$i.amount}
+			</td>
+		  </tr>
+		{/foreach}
+	  {/if}
 	  <tr>
-	    <td>
-	    </td>
-	    <td>
-	    </td>
-	    <td>
-	      Subtotal:
-	    </td>
-	    <td>
-	      &nbsp;{$sub_total}
-	    </td>
-	  </tr>
-	  {foreach from=$discounts key=myId item=i}
-	    <tr>
-	      <td>
-		{$i.title}
-	      </td>
-	      <td>
-	      </td>
-	      <td>
-	      </td>
-	      <td>
-		-{$i.amount}
-	      </td>
-	    </tr>
-	  {/foreach}
-	{/if}
-	<tr>
 	  <td>
 	  </td>
 	  <td>
 	  </td>
 	  <td>
-	    Total:
+	    <strong>Total:</strong>
 	  </td>
 	  <td>
-	    &nbsp;{$total}
+	    <strong>&nbsp;{$total|crmMoney:$currency|string_format:"%10s"}</strong>
 	  </td>
 	</tr>
       </tfoot>
     </table>
+	
+===========================================================
+{ts}Payment Information{/ts}
+
+===========================================================
+{$credit_card_type}
+{$credit_card_number}
+{ts}Expires{/ts}: {$credit_card_exp_date|truncate:7:''|crmDate}
+
+<p><strong>Comments:</strong> If you are paying by check, please send payments to CompassPoint Nonprofit Services, 731 Market
+Street, Suite 200, San Francisco, CA 94103 501c Tax Deductible</p>
+
+<p>If you have questions about the status of your registration or purchase please visit: www.compasspoint.org or call
+415.541.9000.</p>
   </body>
 </html>
