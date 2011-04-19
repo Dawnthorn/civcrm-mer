@@ -15,9 +15,8 @@ class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Check
     $this->price_fields_for_event = array();
     foreach ( $this->cart->events_in_carts as $event_in_cart ) {
       foreach ( $event_in_cart->participants as $participant ) {
-      $participant->load_fields( $this, $event_in_cart );
+        $participant->load_fields( $this, $event_in_cart );
       }
-
       $this->price_fields_for_event[$event_in_cart->event_id] = array();
       $base_field_name = "event_{$event_in_cart->event_id}_amount";
       $price_set_id = CRM_Price_BAO_Set::getFor( "civicrm_event", $event_in_cart->event_id );
@@ -65,11 +64,11 @@ class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Check
     if (! empty($fields['discountcode'])) {
       // check to see if the code exists
       $query = "SELECT cid FROM {civievent_discount} WHERE code = '".stripslashes($fields['discountcode'])."'";
-	  $result = db_query($query);
-	  $row = db_fetch_array($result);
-	  if (empty($row)) {
-	    $errors['discountcode'] = ts( "The discount code you've entered does not appear to be valid." );
-	  }
+      $result = db_query($query);
+      $row = db_fetch_array($result);
+      if (empty($row)) {
+        $errors['discountcode'] = ts( "The discount code you've entered does not appear to be valid." );
+      }
     }
     
     foreach ( $self->cart->events_in_carts as $event_in_cart ) {
@@ -91,13 +90,13 @@ class CRM_Event_Form_Checkout_ParticipantsAndPrices extends CRM_Event_Form_Check
           $errors['_qf_default'] = ts( "Select at least one option from Event Fee(s)." );
         }
 
-		$lineItem = array( );
-		if ( is_array( $self->_values['fee']['fields'] ) ) {
-		  CRM_Price_BAO_Set::processAmount( $self->_values['fee']['fields'], $fields, $lineItem );
-		  if ($fields['amount'] < 0) {
-			$errors['_qf_default'] = ts( "Event Fee(s) can not be less than zero. Please select the options accordingly" );
-		  }
-		}
+        $lineItem = array( );
+        if ( is_array( $self->_values['fee']['fields'] ) ) {
+          CRM_Price_BAO_Set::processAmount( $self->_values['fee']['fields'], $fields, $lineItem );
+          if ($fields['amount'] < 0) {
+          $errors['_qf_default'] = ts( "Event Fee(s) can not be less than zero. Please select the options accordingly" );
+          }
+        }
       }
       
       foreach ( $event_in_cart->participants as $mer_participant ) {

@@ -20,5 +20,7 @@
     {/foreach}
   </tbody>
 </table>
+{if $events_count > 0}
 <a href="{$checkout_url}"><img src="/sites/all/themes/compasspoint/images/cart.gif" />Check Out</a><br /><br />
+{/if}
 <a href="/workshops">&laquo; Back to Workshop Catalog</a>
