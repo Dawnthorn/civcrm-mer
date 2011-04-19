@@ -16,10 +16,10 @@
 	Participants
       </th>
       <th class="cost">
-	Cost
+	Price
       </th>
       <th class="amount">
-	Amount
+	Total
       </th>
     </tr>
   </thead>
