@@ -9,32 +9,32 @@
 <table>
   <thead>
     <tr>
-      <th>
+      <th class="event-title">
 	Event
       </th>
-      <th>
+      <th class="participants-column">
 	Participants
       </th>
-      <th>
+      <th class="cost">
 	Cost
       </th>
-      <th>
+      <th class="amount">
 	Amount
       </th>
     </tr>
   </thead>
   <tbody>
     {foreach from=$line_items item=line_item}
-      <tr>
-	<td>
+      <tr class="event-line-item">
+	<td class="event-title">
 	  {$line_item.event->title} ({$line_item.event->start_date})
 	</td>
-	<td>
+	<td class="participants-column">
 	  {$line_item.num_participants}<br/>
 	  {if $line_item.num_participants > 0}
 	    <div class="participants" style="padding-left: 10px;">
 	      {foreach from=$line_item.participants item=participant}
-		{$participant->first_name} {$participant->last_name}
+			{$participant->first_name} {$participant->last_name}<br />
 	      {/foreach}
 	    </div>
 	  {/if}
@@ -42,15 +42,15 @@
 	    Waitlisted:<br/>
 	    <div class="participants" style="padding-left: 10px;">
 	      {foreach from=$line_item.waiting_participants item=participant}
-		{$participant->first_name} {$participant->last_name}
+			{$participant->first_name} {$participant->last_name}<br />
 	      {/foreach}
 	    </div>
 	  {/if}
 	</td>
-	<td>
+	<td class="cost">
 	  {$line_item.cost}
 	</td>
-	<td>
+	<td class="amount">
 	  &nbsp;{$line_item.amount}
 	</td>
       </tr>
@@ -89,10 +89,10 @@
       </td>
       <td>
       </td>
-      <td>
+      <td class="total">
 	Total:
       </td>
-      <td>
+      <td class="total">
 	&nbsp;{$total}
       </td>
     </tr>
