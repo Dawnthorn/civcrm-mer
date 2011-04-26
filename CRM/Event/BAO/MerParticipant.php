@@ -12,6 +12,8 @@ class CRM_Event_BAO_MerParticipant
   public $index;
   public $last_name;
   public $must_wait = false;
+  public $used_coupon = false;
+  public $used_discount = false;
 
   function email_field_name( $event_in_cart )
   {

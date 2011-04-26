@@ -104,6 +104,18 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	if ( $event->event_type_id == 1 ) {
 	  $this->addParticipantToConferenceEvents( $mer_participant, $participantParams );
 	}
+	$custom_values = array
+	(
+	  'entityID' => $params['contributionID'],
+	  'custom_35' => $mer_participant->used_coupon,
+	);
+	CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
+	$custom_values = array
+	(
+	  'entityID' =>  $params['contributionID'],
+	  'custom_36' => $mer_participant->used_discount,
+	);
+	CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
 
 	$transaction->commit( );
 
@@ -200,6 +212,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		if ($discount) {
 		  $participant_name = "{$mer_participant->first_name} {$mer_participant->last_name}";
 		  $mer_participant->discount_amount += $discount['amount'];
+		  $mer_participant->used_coupon = true;
 		  $this->discount_amount_total += $discount['amount'];
 		  $this->discounts[] = array(
 			'amount' => $discount['amount'],
@@ -234,6 +247,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		{
 		  $orig_cost = $mer_participant->cost;
 		  $mer_participant->discount_amount += round($mer_participant->cost * 0.20, 2);
+		  $mer_participant->used_discount = true;
 		  $total_discount_for_participant += $mer_participant->discount_amount;
 		  $participant_name = "{$mer_participant->first_name} {$mer_participant->last_name}";
 		}
