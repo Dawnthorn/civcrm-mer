@@ -7,34 +7,36 @@
   <p>
     Your order number is <strong>#{$transaction->trxn_id}</strong>. Please print this confirmation for your records. Information about the workshops will be sent separately to each participant. Here's a summary of your transaction placed on {$transaction->trxn_date|date_format:"%D %I:%M %p %Z"}:
   </p>
-  <div class="crm-group billing_name_address-group">
-    <div class="header-dark">
-      {ts}Billing Name and Address{/ts}
-    </div>
-    <div class="crm-section no-label billing_name-section">
-      <div class="content">{$billing_name}</div>
-      <div class="clear"></div>
-    </div>
-    <div class="crm-section no-label billing_address-section">
-      <div class="content">
-	{$billing_street_address}<br/>
-	{$billing_city}, {$billing_state} {$billing_postal_code}
+  {if $payment_required}
+    <div class="crm-group billing_name_address-group">
+      <div class="header-dark">
+	{ts}Billing Name and Address{/ts}
       </div>
-      <div class="clear"></div>
-    </div>
-  </div>
-  <div class="crm-group credit_card-group">
-    <div class="header-dark">
-      {ts}Credit Card Information{/ts}
-    </div>
-    <div class="crm-section no-label credit_card_details-section">
-      <div class="content">{$credit_card_type}</div>
-      <div class="content">{$credit_card_number}</div>
-      <div class="content">{ts}Expires{/ts}: {$credit_card_exp_date.M}/{$credit_card_exp_date.Y}
+      <div class="crm-section no-label billing_name-section">
+	<div class="content">{$billing_name}</div>
+	<div class="clear"></div>
+      </div>
+      <div class="crm-section no-label billing_address-section">
+	<div class="content">
+	  {$billing_street_address}<br/>
+	  {$billing_city}, {$billing_state} {$billing_postal_code}
+	</div>
 	<div class="clear"></div>
       </div>
     </div>
-  </div>
+    <div class="crm-group credit_card-group">
+      <div class="header-dark">
+	{ts}Credit Card Information{/ts}
+      </div>
+      <div class="crm-section no-label credit_card_details-section">
+	<div class="content">{$credit_card_type}</div>
+	<div class="content">{$credit_card_number}</div>
+	<div class="content">{ts}Expires{/ts}: {$credit_card_exp_date.M}/{$credit_card_exp_date.Y}
+	  <div class="clear"></div>
+	</div>
+      </div>
+    </div>
+  {/if}
   <table>
     <thead>
       <tr style="border-bottom: 1px solid #ccc">
@@ -147,7 +149,7 @@
 	  <strong>Total:</strong>
 	</td>
 	<td>
-	  <strong>&nbsp;{$transaction->total_amount|crmMoney:$currency|string_format:"%10s"}</strong>
+	  <strong>&nbsp;{$total|crmMoney:$currency|string_format:"%10s"}</strong>
 	</td>
       </tr>
     </tfoot>

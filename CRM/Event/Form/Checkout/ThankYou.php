@@ -10,7 +10,6 @@ class CheckoutParticipant
   public $contact = null;
   public $first_name = null;
   public $last_name = null;
-  public $line_items = null;
   public $must_wait = false;
   public $participant = null;
 
@@ -30,6 +29,8 @@ class CheckoutParticipant
 
 class CRM_Event_Form_Checkout_ThankYou extends CRM_Event_Form_Checkout
 {
+  public $line_items = null;
+
   function buildLineItems( )
   {
 	$not_waiting_participants = array( );
@@ -93,9 +94,11 @@ class CRM_Event_Form_Checkout_ThankYou extends CRM_Event_Form_Checkout
 	  $this->assign( $template_param_to_copy, $this->get( $template_param_to_copy ) );
 	}
 	$this->buildLineItems( );
+	$this->assign( 'discounts', $this->get( 'discounts' ) );
 	$this->assign( 'events_in_carts', $this->cart->events_in_carts );
 	$this->assign( 'transaction', $transaction );
-	$this->assign( 'discounts', $discounts );
+	$this->assign( 'payment_required', $this->get( 'payment_required' ) );
+	$this->assign( 'total', $this->get( 'total' ) );
   }
 
   function preProcess( )

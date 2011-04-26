@@ -201,25 +201,26 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  foreach ($event_in_cart->participants as $mer_participant) {
 		$mer_participant->cost = $cost;
 		$mer_participant->fee_level = $amount_level;
-		if ( !array_key_exists( $mer_participant->email, $mer_participants_by_email ) )
-		{
-		  $mer_pariticpants_by_email[$mer_participant->email] = array( );
-		}
-		$mer_participants_by_email[$mer_participant->email][] = $mer_participant;
-		
-		// discount validation and application
-		$event_id = $price_values["event_id"];
-		$discount = $this->get_discount_amount($this->discount_code,$event_in_cart->event_id,$mer_participant->cost,$price_set_index);
-		if ($discount) {
-		  $participant_name = "{$mer_participant->first_name} {$mer_participant->last_name}";
-		  $mer_participant->discount_amount += $discount['amount'];
-		  $mer_participant->used_coupon = true;
-		  $this->discount_amount_total += $discount['amount'];
-		  $this->discounts[] = array(
-			'amount' => $discount['amount'],
-			'title' => $discount['type'].' discount ('.$this->discount_code.') for ' . $participant_name . ' (' . $mer_participant->email . ')',
-		  );
-		  $this->discount_code_uses++;
+		if ( !$mer_participant->must_wait ) {
+		  if ( !array_key_exists( $mer_participant->email, $mer_participants_by_email ) )
+		  {
+			$mer_pariticpants_by_email[$mer_participant->email] = array( );
+		  }
+		  $mer_participants_by_email[$mer_participant->email][] = $mer_participant;
+		  // discount validation and application
+		  $event_id = $price_values["event_id"];
+		  $discount = $this->get_discount_amount($this->discount_code,$event_in_cart->event_id,$mer_participant->cost,$price_set_index);
+		  if ($discount) {
+			$participant_name = "{$mer_participant->first_name} {$mer_participant->last_name}";
+			$mer_participant->discount_amount += $discount['amount'];
+			$mer_participant->used_coupon = true;
+			$this->discount_amount_total += $discount['amount'];
+			$this->discounts[] = array(
+			  'amount' => $discount['amount'],
+			  'title' => $discount['type'].' discount ('.$this->discount_code.') for ' . $participant_name . ' (' . $mer_participant->email . ')',
+			);
+			$this->discount_code_uses++;
+		  }
 		}
 	  }
 
@@ -270,7 +271,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$this->assign( 'line_items', $this->line_items );
 	$this->assign( 'sub_total', $this->sub_total );
 	$this->assign( 'total', $this->total );
-	$this->assign( 'discounts', $this->discounts);
+	$this->assign( 'discounts', $this->discounts );
 	$buttons = array( );
 	$buttons[] = array(
 	  'name' => ts('<< Go Back'),
@@ -656,7 +657,10 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  $session_line_items[] = $session_line_item;
 	}
 	$this->set( 'line_items', $session_line_items );
+	dlog("Discounts: " . dlog_debug_var($this->discounts));
 	$this->set( 'discounts', $this->discounts );
+	$this->set( 'payment_required', $this->payment_required );
+	$this->set( 'total', $this->total );
   }
 
   function setDefaultValues()
