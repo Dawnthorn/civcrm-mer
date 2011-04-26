@@ -109,6 +109,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  'entityID' => $params['contributionID'],
 	  'custom_35' => $mer_participant->used_coupon,
 	);
+	require_once 'CRM/Core/BAO/CustomValueTable.php';
 	CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
 	$custom_values = array
 	(
@@ -259,8 +260,12 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  }
 	}
 	$this->total = $this->sub_total - $this->discount_amount_total;
-	$this->buildPaymentFields( );
-	if ($this->total == 0) $this->payment_required = false;
+	if ($this->total > 0) {
+	  $this->payment_required = true;
+	  $this->buildPaymentFields( );
+	} else {
+	  $this->payment_required = false;
+	}
 	$this->assign( 'payment_required', $this->payment_required );
 	$this->assign( 'line_items', $this->line_items );
 	$this->assign( 'sub_total', $this->sub_total );
@@ -280,7 +285,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	);
 
   	global $user;
-  	if (in_array('administrator', array_values($user->roles))) {
+  	if (in_array('administrator', array_values($user->roles)) && $this->total > 0) {
 		$this->add('text', 'billing_contact_email', 'Billing Email','', true );
   	}
 	$this->addButtons( $buttons );
@@ -342,12 +347,20 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$event_values = array( );
 	CRM_Core_DAO::storeValues( $event_in_cart->event, $event_values );
 	$contact_details = CRM_Contact_BAO_Contact::getContactDetails( $participant->contact_id );
-	$payer_contact_details = CRM_Contact_BAO_Contact::getContactDetails( $contact_id );
-	$payer_values = array
-	(
-	  'email' => $payer_contact_details[1],
-	  'name' => $payer_contact_details[0],
-	);
+	if ($this->payment_required) {
+	  $payer_contact_details = CRM_Contact_BAO_Contact::getContactDetails( $contact_id );
+	  $payer_values = array
+	  (
+		'email' => $payer_contact_details[1],
+		'name' => $payer_contact_details[0],
+	  );
+	} else {
+	  $payer_values = array
+	  (
+		'email' => '',
+		'name' => '',
+	  );
+	}
 	$from = "{$event_values['confirm_from_name']} <{$event_values['confirm_from_email']}>";
 	if (!$event_values['confirm_from_email']) {
 	  $from = $this->getDefaultFrom( );
@@ -411,37 +424,42 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   {
 	$errors = array( );
 
-	$payment =& CRM_Core_Payment::singleton( $self->_mode, $self->_paymentProcessor, $this );
-	$error = $payment->checkConfig( $self->_mode );
-	if ( $error ) {
-	  $errors['_qf_default'] = $error;
-	}
+	if ($self->payment_required)
+	{	  
+	  require_once 'CRM/Core/BAO/PaymentProcessor.php';
+	  require_once 'CRM/Core/Payment/Form.php';
+	  $payment =& CRM_Core_Payment::singleton( $self->_mode, $self->_paymentProcessor, $this );
+	  $error = $payment->checkConfig( $self->_mode );
+	  if ( $error ) {
+		$errors['_qf_default'] = $error;
+	  }
 
-	// Validate that the billing contact email is valid
-	if ( CRM_Utils_Array::value( 'billing_contact_email', $fields ) ) {
-		$contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $fields['billing_contact_email'] );
-		if ($contact_details == NULL) {
-			$errors['billing_contact_email'] = ts( "Billing contact email does not appear to belong to a valid user." );
+	  // Validate that the billing contact email is valid
+	  if ( CRM_Utils_Array::value( 'billing_contact_email', $fields ) ) {
+		  $contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $fields['billing_contact_email'] );
+		  if ($contact_details == NULL) {
+			  $errors['billing_contact_email'] = ts( "Billing contact email does not appear to belong to a valid user." );
+		  }
+	  }
+	  
+	  foreach ( $self->_fields as $name => $field ) {
+		if ( $field['is_required'] && CRM_Utils_System::isNull( CRM_Utils_Array::value( $name, $fields ) ) ) {
+		  $errors[$name] = ts( '%1 is a required field.', array( 1 => $field['title'] ) );
 		}
-	}
-	
-	foreach ( $self->_fields as $name => $field ) {
-	  if ( $field['is_required'] && CRM_Utils_System::isNull( CRM_Utils_Array::value( $name, $fields ) ) ) {
-		$errors[$name] = ts( '%1 is a required field.', array( 1 => $field['title'] ) );
-	  }
-	}
-
-	require_once 'CRM/Utils/Rule.php';
-
-	if ( CRM_Utils_Array::value( 'credit_card_type', $fields ) ) {
-	  if ( CRM_Utils_Array::value( 'credit_card_number', $fields ) &&
-		! CRM_Utils_Rule::creditCardNumber( $fields['credit_card_number'], $fields['credit_card_type'] ) ) {
-		  $errors['credit_card_number'] = ts( "Please enter a valid Credit Card Number" );
 	  }
 
-	  if ( CRM_Utils_Array::value( 'cvv2', $fields ) &&
-		! CRM_Utils_Rule::cvv( $fields['cvv2'], $fields['credit_card_type'] ) ) {
-		  $errors['cvv2'] =  ts( "Please enter a valid Credit Card Verification Number" );
+	  require_once 'CRM/Utils/Rule.php';
+
+	  if ( CRM_Utils_Array::value( 'credit_card_type', $fields ) ) {
+		if ( CRM_Utils_Array::value( 'credit_card_number', $fields ) &&
+		  ! CRM_Utils_Rule::creditCardNumber( $fields['credit_card_number'], $fields['credit_card_type'] ) ) {
+			$errors['credit_card_number'] = ts( "Please enter a valid Credit Card Number" );
+		}
+
+		if ( CRM_Utils_Array::value( 'cvv2', $fields ) &&
+		  ! CRM_Utils_Rule::cvv( $fields['cvv2'], $fields['credit_card_type'] ) ) {
+			$errors['cvv2'] =  ts( "Please enter a valid Credit Card Verification Number" );
+		}
 	  }
 	}
 
@@ -451,68 +469,71 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   function postProcess( ) {
 	require_once 'CRM/Core/Transaction.php';
 	$transaction = new CRM_Core_Transaction( );
-	
-	// mark redemptions of discount code
-	$this->redeem_discount();
-	
-	if ( $fields['billing_contact_email'] ) {
-		// get the contact ID from $this->billing_contact_email
-		require_once 'CRM/Contact/BAO/Contact.php';
-		// get contactID from email address
-		$contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $fields['billing_contact_email'] );
-		$contact_id = $contact_details->id;
-	} else {
-		$contact_id = parent::getContactID( );
-	}
-	
-	$payment =& CRM_Core_Payment::singleton( $this->_mode, $this->_paymentProcessor, $this );
-	$params = $this->_submitValues;
-	CRM_Core_Payment_Form::mapParams( "", $params, $params, true );
-	$params['contribution_type_id'] = $this->contribution_type_id;
-	$params['description'] = $this->description;
-	$params['amount'] = $this->total;
-	$params['month'] = $params['credit_card_exp_date']['M'];
-	$params['year'] = $params['credit_card_exp_date']['Y'];
-	$params['invoiceID'] = md5(uniqid(rand(), true));
-	$result =& $payment->doDirectPayment( $params );
-	if ( is_a( $result, 'CRM_Core_Error' ) ) {
-	  CRM_Core_Error::displaySessionError( $result );
-	  CRM_Utils_System::redirect( CRM_Utils_System::url( 'civicrm/event/cart_checkout', "_qf_Payment_display=1&qfKey={$this->controller->_key}", true, null, false ) );
-	  return;
-	}
-	$now = date( 'YmdHis' );
-	$trxnParams = array
-	(
-	  'trxn_date'         => $now,
-	  'trxn_type'         => 'Debit',
-	  'total_amount'      => $params['amount'],
-	  'fee_amount'        => CRM_Utils_Array::value( 'fee_amount', $result ),
-	  'net_amount'        => CRM_Utils_Array::value( 'net_amount', $result, $params['amount'] ), 
-	  'currency'          => $params['currencyID'],
-	  'payment_processor' => $this->_paymentProcessor['payment_processor_type'],
-	  'trxn_id'           => $result['trxn_id'],
-	);
-	require_once 'CRM/Core/BAO/FinancialTrxn.php';
-	$trxn = new CRM_Core_DAO_FinancialTrxn();
-	$trxn->copyValues($trxnParams);
-	require_once 'CRM/Utils/Rule.php';
-	if (! CRM_Utils_Rule::currencyCode($trxn->currency)) {
-	  require_once 'CRM/Core/Config.php';
-	  $config = CRM_Core_Config::singleton();
-	  $trxn->currency = $config->defaultCurrency;
-	}
-	$trxn->save();
+	if ($this->payment_required) 
+	{
+	  // mark redemptions of discount code
+	  $this->redeem_discount();
+	  
+	  if ( $fields['billing_contact_email'] ) {
+		  // get the contact ID from $this->billing_contact_email
+		  require_once 'CRM/Contact/BAO/Contact.php';
+		  // get contactID from email address
+		  $contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $fields['billing_contact_email'] );
+		  $contact_id = $contact_details->id;
+	  } else {
+		  $contact_id = parent::getContactID( );
+	  }
+	  
+	  $payment =& CRM_Core_Payment::singleton( $this->_mode, $this->_paymentProcessor, $this );
+	  $params = $this->_submitValues;
+	  CRM_Core_Payment_Form::mapParams( "", $params, $params, true );
+	  $params['contribution_type_id'] = $this->contribution_type_id;
+	  $params['description'] = $this->description;
+	  $params['amount'] = $this->total;
+	  $params['month'] = $params['credit_card_exp_date']['M'];
+	  $params['year'] = $params['credit_card_exp_date']['Y'];
+	  $params['invoiceID'] = md5(uniqid(rand(), true));
+	  $result =& $payment->doDirectPayment( $params );
+	  if ( is_a( $result, 'CRM_Core_Error' ) ) {
+		CRM_Core_Error::displaySessionError( $result );
+		CRM_Utils_System::redirect( CRM_Utils_System::url( 'civicrm/event/cart_checkout', "_qf_Payment_display=1&qfKey={$this->controller->_key}", true, null, false ) );
+		return;
+	  }
+	  $now = date( 'YmdHis' );
+	  $trxnParams = array
+	  (
+		'trxn_date'         => $now,
+		'trxn_type'         => 'Debit',
+		'total_amount'      => $params['amount'],
+		'fee_amount'        => CRM_Utils_Array::value( 'fee_amount', $result ),
+		'net_amount'        => CRM_Utils_Array::value( 'net_amount', $result, $params['amount'] ), 
+		'currency'          => $params['currencyID'],
+		'payment_processor' => $this->_paymentProcessor['payment_processor_type'],
+		'trxn_id'           => $result['trxn_id'],
+	  );
+	  require_once 'CRM/Core/BAO/FinancialTrxn.php';
+	  $trxn = new CRM_Core_DAO_FinancialTrxn();
+	  $trxn->copyValues($trxnParams);
+	  require_once 'CRM/Utils/Rule.php';
+	  if (! CRM_Utils_Rule::currencyCode($trxn->currency)) {
+		require_once 'CRM/Core/Config.php';
+		$config = CRM_Core_Config::singleton();
+		$trxn->currency = $config->defaultCurrency;
+	  }
+	  $trxn->save();
 
 
-	$credit_card_types = array_flip(CRM_Core_OptionGroup::values('accept_creditcard')); 
-	$credit_card_type_id = $credit_card_types[$params['credit_card_type']];
-	$contribution_statuses = CRM_Contribute_PseudoConstant::contributionStatus( null, 'name' );
+	  $credit_card_types = array_flip(CRM_Core_OptionGroup::values('accept_creditcard')); 
+	  $credit_card_type_id = $credit_card_types[$params['credit_card_type']];
+	  $contribution_statuses = CRM_Contribute_PseudoConstant::contributionStatus( null, 'name' );
+	  $this->set( 'transaction_id', $trxn->id );
+	  $this->emailReceipt( $contact_id, $this->events_in_carts, $trxn );
+	}
 	require_once 'CRM/Event/Form/Registration/Confirm.php';
-	$this->set( 'transaction_id', $trxn->id );
 	$this->set( 'last_event_cart_id', $this->cart->id );
-	$this->cart->completed = true;
-	$this->cart->save( );
-	$this->emailReceipt( $contact_id, $this->events_in_carts, $trxn );
+#	$this->cart->completed = true;
+#	$this->cart->save( );
+	dlog("Foo!\n");
 	$participant_values = $this->getValuesForPage( 'ParticipantsAndPrices' ); 
 	$index = 0;
 	$participant_ids = array( );
