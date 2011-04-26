@@ -8,6 +8,7 @@ class CRM_Event_BAO_EventInCart extends CRM_Event_DAO_EventInCart implements
   public $assocations_loaded = false;
   public $event;
   public $event_cart;
+  public $location = null;
   public $participants = array( );
 
   function __construct( )
@@ -85,6 +86,13 @@ class CRM_Event_BAO_EventInCart extends CRM_Event_DAO_EventInCart implements
 	  $this->event_cart = $event_cart;
 	} else {
 	  $this->event_cart = CRM_Event_BAO_Cart::find_by_id( $this->event_cart_id);
+	}
+  }
+
+  public function load_location( ) {
+	if ($this->location == null) {
+	  $location_params = array( 'entity_id' => $this->event_id, 'entity_table' => 'civicrm_event' );
+	  $this->location = CRM_Core_BAO_Location::getValues( $location_params, true );
 	}
   }
 

@@ -438,6 +438,21 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  ),
 	  'valueName' => 'event_registration_receipt',
 	);
+	$template_params_to_copy = array
+	(
+	  'billing_name',
+	  'billing_city',
+	  'billing_country',
+	  'billing_postal_code',
+	  'billing_state',
+	  'billing_street_address',
+	  'credit_card_exp_date',
+	  'credit_card_type',
+	  'credit_card_number',
+	);
+	foreach ( $template_params_to_copy as $template_param_to_copy ) {
+	  $this->set( $template_param_to_copy, $send_template_params['tplParams'][$template_param_to_copy]);
+	}
 	CRM_Core_BAO_MessageTemplates::sendTemplate( $send_template_params );
   }
 
@@ -552,8 +567,8 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	}
 	require_once 'CRM/Event/Form/Registration/Confirm.php';
 	$this->set( 'last_event_cart_id', $this->cart->id );
-	$this->cart->completed = true;
-	$this->cart->save( );
+#	$this->cart->completed = true;
+#	$this->cart->save( );
 	$participant_values = $this->getValuesForPage( 'ParticipantsAndPrices' ); 
 	$index = 0;
 	$participant_ids = array( );
@@ -625,8 +640,23 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$this->emailParticipant( $contact_id, $event_in_cart, $participant );
 	  }
 	}
-	$this->set( 'participant_ids', $participant_ids );
+	$this->saveDataToSession( $participant_ids );
 	$transaction->commit();
+  }
+
+  function saveDataToSession( $participant_ids )
+  {
+	$this->set( 'participant_ids', $participant_ids );
+	$session_line_items = array( );
+	foreach ( $this->line_items as $line_item ) {
+	  $session_line_item = array();
+	  $session_line_item['amount'] = $line_item['amount'];
+	  $session_line_item['cost'] = $line_item['cost'];
+	  $session_line_item['event_id'] = $line_item['event']->id;
+	  $session_line_items[] = $session_line_item;
+	}
+	$this->set( 'line_items', $session_line_items );
+	$this->set( 'discounts', $this->discounts );
   }
 
   function setDefaultValues()

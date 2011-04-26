@@ -10,6 +10,7 @@ class CheckoutParticipant
   public $contact = null;
   public $first_name = null;
   public $last_name = null;
+  public $line_items = null;
   public $must_wait = false;
   public $participant = null;
 
@@ -29,17 +30,8 @@ class CheckoutParticipant
 
 class CRM_Event_Form_Checkout_ThankYou extends CRM_Event_Form_Checkout
 {
-
-  function buildQuickForm( )
+  function buildLineItems( )
   {
-    $defaults = array( );
-    $ids = array( );
-	$params = array( 'id' => $contributionID );
-	$transaction = new CRM_Core_DAO_FinancialTrxn( );
-	$transaction->id = $this->get( 'transaction_id' );
-	$transaction->find( true );
-	$this->assign( 'events_in_carts', $this->cart->events_in_carts );
-	$this->assign( 'transaction', $transaction );
 	$not_waiting_participants = array( );
 	$waiting_participants = array( );
 	$participant_ids = $this->get( 'participant_ids' );
@@ -48,6 +40,7 @@ class CRM_Event_Form_Checkout_ThankYou extends CRM_Event_Form_Checkout
 	$participant_query->whereAdd( "id IN (" . implode( ", ", $participant_ids ) . ")" );
 	$participant_query->find( );
 	foreach ( $this->cart->events_in_carts as $event_in_cart ) {
+	  $event_in_cart->load_location( );
 	  $event_in_cart->participants = array( );
 	}
 	while ( $participant_query->fetch() ) {
@@ -59,6 +52,50 @@ class CRM_Event_Form_Checkout_ThankYou extends CRM_Event_Form_Checkout
 		}
 	  }
 	} 
+	$line_items = $this->get( 'line_items' );
+	foreach ( $line_items as $line_item ) {
+	  foreach ( $this->cart->events_in_carts as $event_in_cart ) {
+		if ($line_item['event_id'] == $event_in_cart->event_id) {
+		  $line_item['event'] = $event_in_cart->event;
+		  $line_item['num_participants'] = $event_in_cart->num_not_waiting_participants();
+		  $line_item['participants'] = $event_in_cart->not_waiting_participants();
+		  $line_item['num_waiting_participants'] = $event_in_cart->num_waiting_participants();
+		  $line_item['waiting_participants'] = $event_in_cart->waiting_participants();
+		  $line_item['location'] = $event_in_cart->location;
+		}
+	  }
+	  $this->line_items[] = $line_item;
+	}
+	$this->assign( 'line_items', $this->line_items );
+  }
+
+  function buildQuickForm( )
+  {
+    $defaults = array( );
+    $ids = array( );
+	$params = array( 'id' => $contributionID );
+	$transaction = new CRM_Core_DAO_FinancialTrxn( );
+	$transaction->id = $this->get( 'transaction_id' );
+	$transaction->find( true );
+	$template_params_to_copy = array
+	(
+	  'billing_name',
+	  'billing_city',
+	  'billing_country',
+	  'billing_postal_code',
+	  'billing_state',
+	  'billing_street_address',
+	  'credit_card_exp_date',
+	  'credit_card_type',
+	  'credit_card_number',
+	);
+	foreach ( $template_params_to_copy as $template_param_to_copy ) {
+	  $this->assign( $template_param_to_copy, $this->get( $template_param_to_copy ) );
+	}
+	$this->buildLineItems( );
+	$this->assign( 'events_in_carts', $this->cart->events_in_carts );
+	$this->assign( 'transaction', $transaction );
+	$this->assign( 'discounts', $discounts );
   }
 
   function preProcess( )
