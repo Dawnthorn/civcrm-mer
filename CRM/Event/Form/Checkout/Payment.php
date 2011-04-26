@@ -311,15 +311,14 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$params = array( );
 	$params = array( 'id' => $this->getContactID() );
 	$registering_contact = CRM_Contact_BAO_Contact::retrieve( $params, $defaults );
+	$params = array( );
 	if ($registering_contact->employer_id) {
 	  $params['current_employer_id'] = $registering_contact->employer_id;
 	}
-
 	$params['email-Primary'] = $mer_participant->email;
 	$params['first_name'] = $mer_participant->first_name;
 	$params['last_name'] = $mer_participant->last_name;
 	$fields = array( );
-
 	$contactID =& CRM_Contact_BAO_Contact::createProfileContact( $params, $fields, null, $add_to_groups );
 	$contact = CRM_Contact_BAO_Contact::matchContactOnEmail( $mer_participant->email );
 	return $contact;
