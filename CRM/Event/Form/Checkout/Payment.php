@@ -509,19 +509,19 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	{
 	  // mark redemptions of discount code
 	  $this->redeem_discount();
-	  
-	  if ( $fields['billing_contact_email'] ) {
+	  $params = $this->_submitValues;
+	   
+	  if ( $params['billing_contact_email'] ) {
 		  // get the contact ID from $this->billing_contact_email
 		  require_once 'CRM/Contact/BAO/Contact.php';
 		  // get contactID from email address
-		  $contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $fields['billing_contact_email'] );
-		  $contact_id = $contact_details->id;
+		  $contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $params['billing_contact_email'] );
+		  $contact_id = $contact_details->contact_id;
 	  } else {
 		  $contact_id = parent::getContactID( );
 	  }
 	  
 	  $payment =& CRM_Core_Payment::singleton( $this->_mode, $this->_paymentProcessor, $this );
-	  $params = $this->_submitValues;
 	  CRM_Core_Payment_Form::mapParams( "", $params, $params, true );
 	  $params['contribution_type_id'] = $this->contribution_type_id;
 	  $params['description'] = $this->description;
