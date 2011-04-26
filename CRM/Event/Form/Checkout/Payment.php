@@ -393,21 +393,42 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	CRM_Core_BAO_MessageTemplates::sendTemplate( $send_template_params );
   }
 
-  function emailReceipt( $contact_id, $events_in_cart, $trxn )
+  function emailReceipt( $contact_id, $events_in_cart, $trxn, $params )
   {
 	require_once 'CRM/Contact/BAO/Contact.php';
 	require_once 'CRM/Core/BAO/MessageTemplates.php';
 	$contact_details = CRM_Contact_BAO_Contact::getContactDetails( $contact_id );
+	$state_province = new CRM_Core_DAO_StateProvince();
+	$state_province->id = $params['billing_state_province_id-'];
+	$state_province->find( );
+	$state_province->fetch( );
+	$country = new CRM_Core_DAO_Country();
+	$country->id = $params['billing_country_id-'];
+	$country->find( );
+	$country->fetch( );
+	foreach ( $this->line_items as &$line_item ) {
+	  $location_params = array( 'entity_id' => $line_item['event']->id, 'entity_table' => 'civicrm_event' );
+	  $line_item['location'] = CRM_Core_BAO_Location::getValues( $location_params, true );
+	}
 	$send_template_params = array
 	(
 	  'contactId' => $contact_id,
-	  'from' => $this->getDefaultFrom(),
+	  'from' => $this->getDefaultFrom( ),
 	  'groupName' => 'msg_tpl_workflow_event',
 	  'isTest' => false,
 	  'toEmail' => $contact_details[1],
 	  'toName' => $contact_details[0],
 	  'tplParams' => array
 	  (
+		'billing_name' => "{$params['billing_first_name']} {$params['billing_last_name']}",
+		'billing_city' => $params['billing_city-'],
+		'billing_country' => $country->name,
+		'billing_postal_code' => $params['billing_postal_code-'],
+		'billing_state' => $state_province->abbreviation,
+		'billing_street_address' => "{$params['billing_street_address-']}", 
+		'credit_card_exp_date' => $params['credit_card_exp_date'],
+		'credit_card_type' => $params['credit_card_type'],
+		'credit_card_number' => "************" . substr($params['credit_card_number'], -4, 4),
 		'discounts' => $this->discounts,
 		'email' => $contact_details[1],
 		'events_in_cart' => $events_in_cart,
@@ -527,13 +548,12 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  $credit_card_type_id = $credit_card_types[$params['credit_card_type']];
 	  $contribution_statuses = CRM_Contribute_PseudoConstant::contributionStatus( null, 'name' );
 	  $this->set( 'transaction_id', $trxn->id );
-	  $this->emailReceipt( $contact_id, $this->events_in_carts, $trxn );
+	  $this->emailReceipt( $contact_id, $this->events_in_carts, $trxn, $params );
 	}
 	require_once 'CRM/Event/Form/Registration/Confirm.php';
 	$this->set( 'last_event_cart_id', $this->cart->id );
-#	$this->cart->completed = true;
-#	$this->cart->save( );
-	dlog("Foo!\n");
+	$this->cart->completed = true;
+	$this->cart->save( );
 	$participant_values = $this->getValuesForPage( 'ParticipantsAndPrices' ); 
 	$index = 0;
 	$participant_ids = array( );

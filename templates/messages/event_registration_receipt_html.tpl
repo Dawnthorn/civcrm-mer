@@ -21,8 +21,10 @@ Here's a summary of your transaction placed on {$trxn->trxn_date|date_format:"%D
 	  ===========================================================
 	</p>
 	<p>
-	  {$billingName}<br />
-	  {$address}<br /><br />
+	  {$billing_name}<br />
+	  {$billing_street_address}<br />
+	  {$billing_city}, {$billing_state} {$billing_postal_code}<br/>
+	  <br/>
 	  {$email}
 	</p>
     <table>
@@ -49,25 +51,25 @@ Here's a summary of your transaction placed on {$trxn->trxn_date|date_format:"%D
 	  {foreach from=$line_items item=line_item}
 		<tr>
 		  <td>
-			{$line_item.event->title} ({$line_item.event->start_date|date_format:"%D"})<br />
-			{if $isShowLocation}
-			  {if $location.address.1.name}
-				{$location.address.1.name}
-			  {/if}
-			  {if $location.address.1.street_address}
-				{$location.address.1.street_address}
-			  {/if}
-			  {if $location.address.1.supplemental_address_1}
-				{$location.address.1.supplemental_address_1}
-			  {/if}
-			  {if $location.address.1.supplemental_address_2}
-				{$location.address.1.supplemental_address_2}
-			  {/if}
-			  {if $location.address.1.city}
-				{$location.address.1.city} {$location.address.1.postal_code}
-			  {/if}
-			{/if}{*End of isShowLocation condition*}<br /><br />
-			{$line_item.event->start_date|date_format:"%D %I:%M %p"} - {$line_item.event->end_date|date_format:"%I:%M %p"}
+		    {$line_item.event->title} ({$line_item.event->start_date|date_format:"%D"})<br />
+		    {if $line_item.event->is_show_location}
+		      {if $line_item.location.address.1.name}
+			{$line_item.location.address.1.name}
+		      {/if}
+		      {if $line_item.location.address.1.street_address}
+			{$line_item.location.address.1.street_address}
+		      {/if}
+		      {if $line_item.location.address.1.supplemental_address_1}
+			{$line_item.location.address.1.supplemental_address_1}
+		      {/if}
+		      {if $line_item.location.address.1.supplemental_address_2}
+			{$line_item.location.address.1.supplemental_address_2}
+		      {/if}
+		      {if $line_item.location.address.1.city}
+			{$line_item.location.address.1.city} {$location.address.1.postal_code}
+		      {/if}
+		    {/if}{*End of isShowLocation condition*}<br /><br />
+		    {$line_item.event->start_date|date_format:"%D %I:%M %p"} - {$line_item.event->end_date|date_format:"%I:%M %p"}
 		  </td>
 		  <td>
 			{if $line_item.num_participants > 0}
@@ -150,7 +152,7 @@ Here's a summary of your transaction placed on {$trxn->trxn_date|date_format:"%D
 	<p>
 	  {$credit_card_type}<br />
 	  {$credit_card_number}<br />
-	  {ts}Expires{/ts}: {$credit_card_exp_date|truncate:7:''|crmDate}
+	  {ts}Expires{/ts}: {$credit_card_exp_date.M}/{$credit_card_exp_date.Y}
 	</p>
 	
 	<p><strong>Comments:</strong> If you are paying by check, please send payments to CompassPoint Nonprofit Services, 731 Market
