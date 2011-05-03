@@ -40,74 +40,69 @@
   <table>
     <thead>
       <tr style="border-bottom: 1px solid #ccc">
-	<th>
-	  Event
-	</th>
-	<th>
-	  Participants
-	</th>
-	<th>
-	  Price
-	</th>
-	<th>
-	  Quantity
-	</th>
-	<th>
-	  Total
-	</th>
+		<th class="event-title">
+		  Event
+		</th>
+		<th class="participants-column">
+		  Participants
+		</th>
+		<th class="cost">
+		  Price
+		</th>
+		<th class="amount">
+		  Total
+		</th>
       </tr>
     </thead>
     <tbody>
       {foreach from=$line_items item=line_item}
-      <tr>
-	<td>
-	  {$line_item.event->title} ({$line_item.event->start_date|date_format:"%D"})<br />
-	  {if $line_item.event->is_show_location}
-	    {if $line_item.location.address.1.name}
-	      {$line_item.location.address.1.name}
-	    {/if}
-	    {if $line_item.location.address.1.street_address}
-	      {$line_item.location.address.1.street_address}
-	    {/if}
-	    {if $line_item.location.address.1.supplemental_address_1}
-	      {$line_item.location.address.1.supplemental_address_1}
-	    {/if}
-	    {if $line_item.location.address.1.supplemental_address_2}
-	      {$line_item.location.address.1.supplemental_address_2}
-	    {/if}
-	    {if $line_item.location.address.1.city}
-	      {$line_item.location.address.1.city} {$line_item.location.address.1.postal_code}
-	    {/if}
-	  {/if}{*End of isShowLocation condition*}<br /><br />
-	  {$line_item.event->start_date|date_format:"%D %I:%M %p"} -
-	  {$line_item.event->end_date|date_format:"%I:%M %p"}
-	</td>
-	<td>
-	  {if $line_item.num_participants > 0}
-	    <div class="participants" style="padding-left: 10px;">
-	      {foreach from=$line_item.participants item=participant}
-	      {$participant->first_name} {$participant->last_name}<br />
-	      {/foreach}
-	    </div>
-	  {/if}
-	  {if $line_item.num_waiting_participants > 0}
-	    Waitlisted:<br/>
-	    <div class="participants" style="padding-left: 10px;">
-	      {foreach from=$line_item.waiting_participants item=participant}
-	      {$participant->first_name} {$participant->last_name}<br />
-	      {/foreach}
-	    </div>
-	  {/if}
-	</td>
-	<td>
-	  {$line_item.cost|crmMoney:$currency|string_format:"%10s"}
-	</td>
-	<td>
-	  {$line_item.num_participants}
-	</td>
-	<td>
-	  &nbsp;{$line_item.amount|crmMoney:$currency|string_format:"%10s"}
-	</td>
+      <tr class="event-line-item">
+		<td class="event-title">
+		  {$line_item.event->title} ({$line_item.event->start_date|date_format:"%D"})<br />
+		  {if $line_item.event->is_show_location}
+			{if $line_item.location.address.1.name}
+			  {$line_item.location.address.1.name}
+			{/if}
+			{if $line_item.location.address.1.street_address}
+			  {$line_item.location.address.1.street_address}
+			{/if}
+			{if $line_item.location.address.1.supplemental_address_1}
+			  {$line_item.location.address.1.supplemental_address_1}
+			{/if}
+			{if $line_item.location.address.1.supplemental_address_2}
+			  {$line_item.location.address.1.supplemental_address_2}
+			{/if}
+			{if $line_item.location.address.1.city}
+			  {$line_item.location.address.1.city} {$line_item.location.address.1.postal_code}
+			{/if}
+		  {/if}{*End of isShowLocation condition*}<br /><br />
+		  {$line_item.event->start_date|date_format:"%D %I:%M %p"} -
+		  {$line_item.event->end_date|date_format:"%I:%M %p"}
+		</td>
+		<td class="participants-column">
+		  {$line_item.num_participants}<br />
+		  {if $line_item.num_participants > 0}
+			<div class="participants" style="padding-left: 10px;">
+			  {foreach from=$line_item.participants item=participant}
+			  {$participant->first_name} {$participant->last_name}<br />
+			  {/foreach}
+			</div>
+		  {/if}
+		  {if $line_item.num_waiting_participants > 0}
+			Waitlisted:<br/>
+			<div class="participants" style="padding-left: 10px;">
+			  {foreach from=$line_item.waiting_participants item=participant}
+			  {$participant->first_name} {$participant->last_name}<br />
+			  {/foreach}
+			</div>
+		  {/if}
+		</td>
+		<td class="cost">
+		  {$line_item.cost|crmMoney:$currency|string_format:"%10s"}
+		</td>
+		<td class="amount">
+		  &nbsp;{$line_item.amount|crmMoney:$currency|string_format:"%10s"}
+		</td>
       </tr>
       {/foreach}
     </tbody>
