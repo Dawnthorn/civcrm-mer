@@ -140,10 +140,10 @@
 	</td>
 	<td>
 	</td>
-	<td>
+	<td class="total">
 	  <strong>Total:</strong>
 	</td>
-	<td>
+	<td class="total">
 	  <strong>&nbsp;{$total|crmMoney:$currency|string_format:"%10s"}</strong>
 	</td>
       </tr>
