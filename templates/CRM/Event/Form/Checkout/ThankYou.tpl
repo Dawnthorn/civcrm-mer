@@ -130,7 +130,7 @@
 	    <td>
 	    </td>
 	    <td>
-	      -{$i.amount}
+	      -{$i.amount|crmMoney:$currency|string_format:"%10s"}
 	    </td>
 	  </tr>
 	{/foreach}

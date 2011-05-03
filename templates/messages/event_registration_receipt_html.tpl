@@ -17,10 +17,10 @@
       Here's a summary of your transaction placed on {$trxn->trxn_date|date_format:"%D %I:%M %p %Z"}:</p>
     
 	<table class="billing-info">
-      <tr style="background-color: #DDDDDD;">
-		<td>
+      <tr>
+		<th style="text-align: left;">
 		  {ts}Billing Name and Address{/ts}
-		</td>
+		</th>
       </tr>
       <tr>
 		<td>
@@ -32,12 +32,12 @@
 		</td>
 	  </tr>
     </table>
-	
+	<p>&nbsp;</p>
 	<table class="billing-info">
-      <tr style="background-color: #DDDDDD;">
-		<td>
+      <tr>
+		<th style="text-align: left;">
 		  {ts}Credit Card Information{/ts}
-		</td>
+		</th>
       </tr>
       <tr>
 		<td>
@@ -47,23 +47,20 @@
 		</td>
 	  </tr>
     </table>
-    	
-    <table>
+    <p>&nbsp;</p>
+    <table width="600">
       <thead>
-		<tr style="border-bottom: 1px solid #ccc">
-		  <th>
+		<tr>
+		  <th style="text-align: left;">
 			Event
 		  </th>
-		  <th>
+		  <th style="text-align: left;">
 			Participants
 		  </th>
-		  <th>
+		  <th style="text-align: left;">
 			Price
 		  </th>
-		  <th>
-			Quantity
-		  </th>
-		  <th>
+		  <th style="text-align: left;">
 			Total
 		  </th>
 		</tr>
@@ -71,7 +68,7 @@
       <tbody>
 	{foreach from=$line_items item=line_item}
 	<tr>
-	  <td>
+	  <td style="width: 220px">
 	    {$line_item.event->title} ({$line_item.event->start_date|date_format:"%D"})<br />
 	    {if $line_item.event->is_show_location}
 	      {if $line_item.location.address.1.name}
@@ -92,7 +89,8 @@
 	    {/if}{*End of isShowLocation condition*}<br /><br />
 	    {$line_item.event->start_date|date_format:"%D %I:%M %p"} - {$line_item.event->end_date|date_format:"%I:%M %p"}
 	  </td>
-	  <td>
+	  <td style="width: 180px">
+		{$line_item.num_participants}
 	    {if $line_item.num_participants > 0}
 	    <div class="participants" style="padding-left: 10px;">
 	      {foreach from=$line_item.participants item=participant}
@@ -109,13 +107,10 @@
 	    </div>
 	    {/if}
 	  </td>
-	  <td>
+	  <td style="width: 100px">
 	    {$line_item.cost|crmMoney:$currency|string_format:"%10s"}
 	  </td>
-	  <td>
-	    {$line_item.num_participants}
-	  </td>
-	  <td>
+	  <td style="width: 100px">
 	    &nbsp;{$line_item.amount|crmMoney:$currency|string_format:"%10s"}
 	  </td>
 	</tr>
