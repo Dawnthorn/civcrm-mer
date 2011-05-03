@@ -15,38 +15,59 @@
 
     <p>Your order number is #{$trxn->trxn_id}. Please print this confirmation for your records. Information about the workshops will be sent separately to each participant.
       Here's a summary of your transaction placed on {$trxn->trxn_date|date_format:"%D %I:%M %p %Z"}:</p>
-    <p>
-      ===========================================================
-      {ts}Billing Name and Address{/ts}
-      ===========================================================
-    </p>
-    <p>
-      {$billing_name}<br />
-      {$billing_street_address}<br />
-      {$billing_city}, {$billing_state} {$billing_postal_code}<br/>
-      <br/>
-      {$email}
-    </p>
+    
+	<table class="billing-info">
+      <tr style="background-color: #DDDDDD;">
+		<td>
+		  {ts}Billing Name and Address{/ts}
+		</td>
+      </tr>
+      <tr>
+		<td>
+		  {$billing_name}<br />
+		  {$billing_street_address}<br />
+		  {$billing_city}, {$billing_state} {$billing_postal_code}<br/>
+		  <br/>
+		  {$email}
+		</td>
+	  </tr>
+    </table>
+	
+	<table class="billing-info">
+      <tr style="background-color: #DDDDDD;">
+		<td>
+		  {ts}Credit Card Information{/ts}
+		</td>
+      </tr>
+      <tr>
+		<td>
+		  {$credit_card_type}<br />
+		  {$credit_card_number}<br />
+		  {ts}Expires{/ts}: {$credit_card_exp_date.M}/{$credit_card_exp_date.Y}
+		</td>
+	  </tr>
+    </table>
+    	
     <table>
       <thead>
-	<tr style="border-bottom: 1px solid #ccc">
-	  <th>
-	    Event
-	  </th>
-	  <th>
-	    Participants
-	  </th>
-	  <th>
-	    Price
-	  </th>
-	  <th>
-	    Quantity
-	  </th>
-	  <th>
-	    Total
-	  </th>
-	</tr>
-      </thead>
+		<tr style="border-bottom: 1px solid #ccc">
+		  <th>
+			Event
+		  </th>
+		  <th>
+			Participants
+		  </th>
+		  <th>
+			Price
+		  </th>
+		  <th>
+			Quantity
+		  </th>
+		  <th>
+			Total
+		  </th>
+		</tr>
+	  </thead>
       <tbody>
 	{foreach from=$line_items item=line_item}
 	<tr>
@@ -143,22 +164,6 @@
 	</tr>
       </tfoot>
     </table>
-
-    <p>
-      ===========================================================
-      {ts}Payment Information{/ts}
-      ===========================================================
-    </p>
-    <p>
-      {$credit_card_type}<br />
-      {$credit_card_number}<br />
-      {ts}Expires{/ts}: {$credit_card_exp_date.M}/{$credit_card_exp_date.Y}
-    </p>
-
-    <p><strong>Comments:</strong> If you are paying by check, please send payments to CompassPoint Nonprofit Services, 731 Market
-      Street, Suite 200, San Francisco, CA 94103 501c Tax Deductible</p>
-
-    <p>If you have questions about the status of your registration or purchase please visit: www.compasspoint.org or call
-      415.541.9000.</p>
+    <p>If you have questions about the status of your registration or purchase please email us at <a href="mailto:workshops@compasspoint.org">workshops@compasspoint.org</a>.</p>
   </body>
 </html>

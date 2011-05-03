@@ -5,7 +5,7 @@
     This is your receipt of payment made for the following workshop, event registration or purchase made at CompassPoint Nonprofit Services.
   </p>
   <p>
-    Your order number is <strong>#{$transaction->trxn_id}</strong>. Please print this confirmation for your records. Information about the workshops will be sent separately to each participant. Here's a summary of your transaction placed on {$transaction->trxn_date|date_format:"%D %I:%M %p %Z"}:
+    Your order number is <strong>#{$transaction->trxn_id}</strong>. Please print this confirmation for your records. You will receieve a confirmation email with the information below.  Information about the workshops will be sent separately to each participant. Here's a summary of your transaction placed on {$transaction->trxn_date|date_format:"%D %I:%M %p %Z"}:
   </p>
   {if $payment_required}
     <div class="crm-group billing_name_address-group">
@@ -13,27 +13,27 @@
 	{ts}Billing Name and Address{/ts}
       </div>
       <div class="crm-section no-label billing_name-section">
-	<div class="content">{$billing_name}</div>
-	<div class="clear"></div>
+		<div class="content">{$billing_name}</div>
+		<div class="clear"></div>
       </div>
       <div class="crm-section no-label billing_address-section">
-	<div class="content">
-	  {$billing_street_address}<br/>
-	  {$billing_city}, {$billing_state} {$billing_postal_code}
-	</div>
-	<div class="clear"></div>
+		<div class="content">
+		  {$billing_street_address}<br/>
+		  {$billing_city}, {$billing_state} {$billing_postal_code}
+		</div>
+		<div class="clear"></div>
       </div>
     </div>
     <div class="crm-group credit_card-group">
       <div class="header-dark">
-	{ts}Credit Card Information{/ts}
+		{ts}Credit Card Information{/ts}
       </div>
       <div class="crm-section no-label credit_card_details-section">
-	<div class="content">{$credit_card_type}</div>
-	<div class="content">{$credit_card_number}</div>
-	<div class="content">{ts}Expires{/ts}: {$credit_card_exp_date.M}/{$credit_card_exp_date.Y}
-	  <div class="clear"></div>
-	</div>
+		<div class="content">{$credit_card_type}</div>
+		<div class="content">{$credit_card_number}</div>
+		<div class="content">{ts}Expires{/ts}: {$credit_card_exp_date.M}/{$credit_card_exp_date.Y}
+		  <div class="clear"></div>
+		</div>
       </div>
     </div>
   {/if}
@@ -154,7 +154,5 @@
       </tr>
     </tfoot>
   </table>
-  <p><strong>Comments:</strong> If you are paying by check, please send payments to CompassPoint Nonprofit Services, 731 Market Street, Suite 200, San Francisco, CA 94103 501c Tax Deductible</p>
-
-  <p>If you have questions about the status of your registration or purchase please call 415.541.9000.</p>
+  <p>If you have questions about the status of your registration or purchase please email us at <a href="mailto:workshops@compasspoint.org">workshops@compasspoint.org</a>.</p>
 </div>

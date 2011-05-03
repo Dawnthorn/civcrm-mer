@@ -70,6 +70,4 @@ Total: {$total|crmMoney:$currency|string_format:"%10s"}
 {$credit_card_number}
 {ts}Expires{/ts}: {$credit_card_exp_date|truncate:7:''|crmDate}
 
-Comments: If you are paying by check, please send payments to CompassPoint Nonprofit Services, 731 Market Street, Suite 200, San Francisco, CA 94103 501c Tax Deductible
-
-If you have questions about the status of your registration or purchase please visit: www.compasspoint.org or call 415.541.9000.
+If you have questions about the status of your registration or purchase please email us at workshops@compasspoint.org.
