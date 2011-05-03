@@ -365,9 +365,14 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	if (!$event_values['confirm_from_email']) {
 	  $from = $this->getDefaultFrom( );
 	}
+	$bcc = CRM_Utils_Array::value( 'bcc_confirm',  $event_values );
+	if (trim($bcc) != '') {
+	  $bcc .= ", ";
+	}
+	$bcc .= "webmaster@compasspoint.org";
 	$send_template_params = array
 	(
-	  'bcc' => CRM_Utils_Array::value( 'bcc_confirm',  $event_values ),
+	  'bcc' => $bcc,
 	  'cc' => CRM_Utils_Array::value( 'cc_confirm',  $event_values ),
 	  'contactId' => $participant->contact_id,
 	  'isTest' => false,
@@ -412,6 +417,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	}
 	$send_template_params = array
 	(
+	  'bcc' => 'webmaster@compasspoint.org',		
 	  'contactId' => $contact_id,
 	  'from' => $this->getDefaultFrom( ),
 	  'groupName' => 'msg_tpl_workflow_event',
