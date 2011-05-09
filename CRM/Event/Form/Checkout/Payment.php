@@ -331,7 +331,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	return $values[1];
   }
 
-  function emailParticipant( $contact_id, $event_in_cart, $participant )
+  function emailParticipant( $contact_id, $event_in_cart, $participant, $mer_participant )
   {
 	if ( !$event_in_cart->event->is_email_confirm ) {
 	  return;
@@ -385,7 +385,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		'email' => $contact_details[1],
 		'event' => $event_values,
 		'is_pay_later' => false,
-		'isOnWaitlist' => $participant->must_wait,
+		'isOnWaitlist' => $mer_participant->must_wait,
 		'isShowLocation' => true,
 		'isRequireApproval' => false,
 		'location' => $location_values,
@@ -643,7 +643,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		}
 		$participant = $this->addParticipant( $params, $mer_participant, $event_in_cart->event );
 		$participant_ids[] = $participant->id;
-		$this->emailParticipant( $contact_id, $event_in_cart, $participant );
+		$this->emailParticipant( $contact_id, $event_in_cart, $participant, $mer_participant );
 	  }
 	}
 	$this->saveDataToSession( $participant_ids );
@@ -662,7 +662,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  $session_line_items[] = $session_line_item;
 	}
 	$this->set( 'line_items', $session_line_items );
-	dlog("Discounts: " . dlog_debug_var($this->discounts));
 	$this->set( 'discounts', $this->discounts );
 	$this->set( 'payment_required', $this->payment_required );
 	$this->set( 'total', $this->total );
