@@ -53,7 +53,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  $roleID = $dao->value;
 	}
 
-	require_once 'CRM/Event/PseudoConstant.php';
 	if ( $mer_participant->must_wait ) {
 	  $waiting_statuses = CRM_Event_PseudoConstant::participantStatus( null, "class = 'Waiting'" );
 	  $params['participant_status_id'] = array_search( 'On waitlist', $waiting_statuses );
@@ -509,24 +508,34 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   }
 
   function postProcess( ) {
+	require_once 'CRM/Contact/BAO/Contact.php';
+	require_once 'CRM/Contribute/BAO/Contribution.php';
+	require_once 'CRM/Contribute/PseudoConstant.php';
+	require_once 'CRM/Core/BAO/CustomValueTable.php';
+	require_once 'CRM/Core/Config.php';
 	require_once 'CRM/Core/Transaction.php';
+	require_once 'CRM/Core/BAO/FinancialTrxn.php';
+	require_once 'CRM/Event/Form/Registration/Confirm.php';
+	require_once 'CRM/Event/PseudoConstant.php';
+	require_once 'CRM/Utils/Rule.php';
 	$transaction = new CRM_Core_Transaction( );
+	$trxn = null;
+	// mark redemptions of discount code
+	$this->redeem_discount();
+	$params = $this->_submitValues;
+	$contribution_statuses = CRM_Contribute_PseudoConstant::contributionStatus( null, 'name' );
+	if ( $params['billing_contact_email'] ) {
+	  // get the contact ID from $this->billing_contact_email
+	  // get contactID from email address
+	  $contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $params['billing_contact_email'] );
+	  $contact_id = $contact_details->contact_id;
+	} else {
+	  $contact_id = parent::getContactID( );
+	}
+	$now = date( 'YmdHis' );
+	$params['invoiceID'] = md5(uniqid(rand(), true));
 	if ($this->payment_required) 
 	{
-	  // mark redemptions of discount code
-	  $this->redeem_discount();
-	  $params = $this->_submitValues;
-	   
-	  if ( $params['billing_contact_email'] ) {
-		  // get the contact ID from $this->billing_contact_email
-		  require_once 'CRM/Contact/BAO/Contact.php';
-		  // get contactID from email address
-		  $contact_details = CRM_Contact_BAO_Contact::matchContactOnEmail( $params['billing_contact_email'] );
-		  $contact_id = $contact_details->contact_id;
-	  } else {
-		  $contact_id = parent::getContactID( );
-	  }
-	  
 	  $payment =& CRM_Core_Payment::singleton( $this->_mode, $this->_paymentProcessor, $this );
 	  CRM_Core_Payment_Form::mapParams( "", $params, $params, true );
 	  $params['contribution_type_id'] = $this->contribution_type_id;
@@ -534,14 +543,12 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  $params['amount'] = $this->total;
 	  $params['month'] = $params['credit_card_exp_date']['M'];
 	  $params['year'] = $params['credit_card_exp_date']['Y'];
-	  $params['invoiceID'] = md5(uniqid(rand(), true));
 	  $result =& $payment->doDirectPayment( $params );
 	  if ( is_a( $result, 'CRM_Core_Error' ) ) {
 		CRM_Core_Error::displaySessionError( $result );
 		CRM_Utils_System::redirect( CRM_Utils_System::url( 'civicrm/event/cart_checkout', "_qf_Payment_display=1&qfKey={$this->controller->_key}", true, null, false ) );
 		return;
 	  }
-	  $now = date( 'YmdHis' );
 	  $trxnParams = array
 	  (
 		'trxn_date'         => $now,
@@ -553,83 +560,91 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		'payment_processor' => $this->_paymentProcessor['payment_processor_type'],
 		'trxn_id'           => $result['trxn_id'],
 	  );
-	  require_once 'CRM/Core/BAO/FinancialTrxn.php';
 	  $trxn = new CRM_Core_DAO_FinancialTrxn();
 	  $trxn->copyValues($trxnParams);
-	  require_once 'CRM/Utils/Rule.php';
 	  if (! CRM_Utils_Rule::currencyCode($trxn->currency)) {
-		require_once 'CRM/Core/Config.php';
 		$config = CRM_Core_Config::singleton();
 		$trxn->currency = $config->defaultCurrency;
 	  }
 	  $trxn->save();
-
-
 	  $credit_card_types = array_flip(CRM_Core_OptionGroup::values('accept_creditcard')); 
 	  $credit_card_type_id = $credit_card_types[$params['credit_card_type']];
-	  $contribution_statuses = CRM_Contribute_PseudoConstant::contributionStatus( null, 'name' );
 	  $this->set( 'transaction_id', $trxn->id );
 	  $this->emailReceipt( $contact_id, $this->events_in_carts, $trxn, $params );
 	}
-	require_once 'CRM/Event/Form/Registration/Confirm.php';
 	$this->set( 'last_event_cart_id', $this->cart->id );
-	$this->cart->completed = true;
-	$this->cart->save( );
+#	$this->cart->completed = true;
+#	$this->cart->save( );
 	$participant_values = $this->getValuesForPage( 'ParticipantsAndPrices' ); 
 	$index = 0;
 	$participant_ids = array( );
+	if ($trxn == null) {
+	  $trxn_id = strftime("VR%Y%m%d%H%M%S");
+	} else {
+	  $trxn_id = $trxn->trxn_id;
+	}
 	foreach ( $this->cart->events_in_carts as $event_in_cart ) {
 	  foreach ( $event_in_cart->participants as $mer_participant ) {
+		if ( $mer_participant->must_wait ) {
+		  continue;
+		}
+		$is_voucher = ($params['amount'] == 0);
 		$index += 1;
 		$params['amount'] = 0;
 		$params['contributionID'] = null;
 		$params['contributionTypeID'] = null;
 		$params['receive_date'] =  null;
 		$params['trxn_id'] = null;
-		if ( $this->payment_required ) {
-		  $params['amount'] = $mer_participant->cost - $mer_participant->discount_amount;
-		  $contribParams = array
-		  (
-			'contact_id' => $contact_id,
-			'contribution_type_id' => $event_in_cart->event->contribution_type_id,
-			'receive_date' => $now,
-			'total_amount' => $params['amount'],
-			'amount_level' => $mer_participant->fee_level,
-			'fee_amount' => $mer_participant->cost,
-			'net_amount' => $params['amount'],
-			'invoice_id' => "{$params['invoiceID']}-$index",
-			'trxn_id' => "{$trxn->trxn_id}-$index",
-			'currency' => $params['currencyID'],
-			'source' => $event_in_cart->event->title,
-			'contribution_status_id' => array_search( 'Completed', $contribution_statuses ),
-			'payment_instrument_id' => 1,
-		  );
-		  require_once 'CRM/Contribute/BAO/Contribution.php';
-		  $contribution =& CRM_Contribute_BAO_Contribution::add( $contribParams, $ids );
-		  require_once 'CRM/Core/BAO/CustomValueTable.php';
-		  $custom_values = array
-		  (
-			'entityID' => $event_in_cart->event->id,
-			'custom_2' => 1,
-		  );
-		  $result = CRM_Core_BAO_CustomValueTable::getValues( $custom_values );
-		  $event_gl_code = $result['custom_2'];
-		  $custom_values = array
-		  (
-			'entityID' => $contribution->id,
-			'custom_15' => $event_gl_code,
-		  );
-		  CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
-		  $custom_values = array
-		  (
-			'entityID' => $contribution->id,
-			'custom_28' => $credit_card_type_id,
-		  );
-		  CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
-		  $params['contributionID'] = $contribution->id;
-		  $params['contributionTypeID'] = $contribution->contribution_type_id;
-		  $params['receive_date'] =  $contribution->receive_date;
-		  $params['trxn_id'] = $contribution->trxn_id;
+		$params['amount'] = $mer_participant->cost - $mer_participant->discount_amount;
+		$sub_trxn_id = "$trxn_id-$index";
+		$payment_instrument_id = 1;
+		if ( $is_voucher ) {
+		  $payment_instrument_id = 7;
+		}
+		$contribParams = array
+		(
+		  'contact_id' => $contact_id,
+		  'contribution_type_id' => $event_in_cart->event->contribution_type_id,
+		  'receive_date' => $now,
+		  'total_amount' => $params['amount'],
+		  'amount_level' => $mer_participant->fee_level,
+		  'fee_amount' => $mer_participant->cost,
+		  'net_amount' => $params['amount'],
+		  'invoice_id' => "{$params['invoiceID']}-$index",
+		  'trxn_id' => $sub_trxn_id,
+		  'currency' => $params['currencyID'],
+		  'source' => $event_in_cart->event->title,
+		  'contribution_status_id' => array_search( 'Completed', $contribution_statuses ),
+		  'payment_instrument_id' => $payment_instrument_id,
+		);
+		$contribution =& CRM_Contribute_BAO_Contribution::add( $contribParams, $ids );
+		if ( is_a( $contribution, 'CRM_Core_Error' ) ) {
+		  CRM_Core_Error::fatal( ts( "There was an error creating a contribution record for your event. Please report this error to CompassPoint. Details:\n" . dlog_debug_var( $contribution ) ) );
+		}
+		$custom_values = array
+		(
+		  'entityID' => $event_in_cart->event->id,
+		  'custom_2' => 1,
+		);
+		$result = CRM_Core_BAO_CustomValueTable::getValues( $custom_values );
+		$event_gl_code = $result['custom_2'];
+		$custom_values = array
+		(
+		  'entityID' => $contribution->id,
+		  'custom_15' => $event_gl_code,
+		);
+		CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
+		$custom_values = array
+		(
+		  'entityID' => $contribution->id,
+		  'custom_28' => $credit_card_type_id,
+		);
+		CRM_Core_BAO_CustomValueTable::setValues( $custom_values );
+		$params['contributionID'] = $contribution->id;
+		$params['contributionTypeID'] = $contribution->contribution_type_id;
+		$params['receive_date'] =  $contribution->receive_date;
+		$params['trxn_id'] = $contribution->trxn_id;
+		if ( $trxn != null ) {
 		  $entity_financial_trxn_params = array(
 			'entity_table'      => "civicrm_contribution",
 			'entity_id'         => $contribution->id,
@@ -646,11 +661,11 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$this->emailParticipant( $contact_id, $event_in_cart, $participant, $mer_participant );
 	  }
 	}
-	$this->saveDataToSession( $participant_ids );
+	$this->saveDataToSession( $participant_ids, $trxn_id );
 	$transaction->commit();
   }
 
-  function saveDataToSession( $participant_ids )
+  function saveDataToSession( $participant_ids, $trxn_id )
   {
 	$this->set( 'participant_ids', $participant_ids );
 	$session_line_items = array( );
@@ -664,6 +679,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	$this->set( 'line_items', $session_line_items );
 	$this->set( 'discounts', $this->discounts );
 	$this->set( 'payment_required', $this->payment_required );
+	$this->set( 'trxn_id', $trxn_id );
 	$this->set( 'total', $this->total );
   }
 
@@ -707,7 +723,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
     $priceSets = unserialize($row['pricesets']);
 	if (intval($row['expiration']) > 0 && (time() > strtotime($row['expiration']))) {
 	  $errors['discountcode'] = ts('Code has expired.');
-	} else if ($row['count_use'] && ($row['count_use'] + $this->discount_code_uses >= $row["count_max"])) {
+	} else if ($row["count_max"] > 0 && $row['count_use'] && ($row['count_use'] + $this->discount_code_uses >= $row["count_max"])) {
 	  $errors['discountcode'] = ts('Max uses exceeded for discount code.');
 	} else if (! empty($events) && ! in_array($eventID,$events) ) {
 	  $errors['discountcode'] = ts('Code not valid for this event.');  
@@ -725,7 +741,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$discount['type'] = '$'.$row['amount'];
 	  }
 	}
-    
     return $discount;
   }
   

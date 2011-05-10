@@ -30,6 +30,7 @@ class CheckoutParticipant
 class CRM_Event_Form_Checkout_ThankYou extends CRM_Event_Form_Checkout
 {
   public $line_items = null;
+  public $sub_total = 0;
 
   function buildLineItems( )
   {
@@ -65,6 +66,7 @@ class CRM_Event_Form_Checkout_ThankYou extends CRM_Event_Form_Checkout
 		  $line_item['location'] = $event_in_cart->location;
 		}
 	  }
+	  $this->sub_total += $line_item['amount'];
 	  $this->line_items[] = $line_item;
 	}
 	$this->assign( 'line_items', $this->line_items );
@@ -98,7 +100,9 @@ class CRM_Event_Form_Checkout_ThankYou extends CRM_Event_Form_Checkout
 	$this->assign( 'events_in_carts', $this->cart->events_in_carts );
 	$this->assign( 'transaction', $transaction );
 	$this->assign( 'payment_required', $this->get( 'payment_required' ) );
+	$this->assign( 'sub_total', $this->sub_total );
 	$this->assign( 'total', $this->get( 'total' ) );
+	$this->assign( 'trxn_id', $this->get( 'trxn_id' ) );
   }
 
   function preProcess( )

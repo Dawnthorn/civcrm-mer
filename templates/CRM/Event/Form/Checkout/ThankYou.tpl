@@ -5,7 +5,7 @@
     This is your receipt of payment made for the following workshop, event registration or purchase made at CompassPoint Nonprofit Services.
   </p>
   <p>
-    Your order number is <strong>#{$transaction->trxn_id}</strong>. Please print this confirmation for your records. You will receieve a confirmation email with the information below.  Information about the workshops will be sent separately to each participant. Here's a summary of your transaction placed on {$transaction->trxn_date|date_format:"%D %I:%M %p %Z"}:
+    Your order number is <strong>#{$trxn_id}</strong>. Please print this confirmation for your records. You will receieve a confirmation email with the information below.  Information about the workshops will be sent separately to each participant. Here's a summary of your transaction placed on {$transaction->trxn_date|date_format:"%D %I:%M %p %Z"}:
   </p>
   {if $payment_required}
     <div class="crm-group billing_name_address-group">
