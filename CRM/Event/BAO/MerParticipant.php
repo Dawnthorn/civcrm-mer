@@ -64,4 +64,15 @@ class CRM_Event_BAO_MerParticipant
 
 	return null;
   }
+
+  static function billing_address_from_contact( $contact )
+  {
+        foreach ($contact->address as $loc) {
+            if ($loc['is_billing']) return $loc;
+        }
+        foreach ($contact->address as $loc) {
+            if ($loc['is_primary']) return $loc;
+        }
+        return null;
+  }
 }

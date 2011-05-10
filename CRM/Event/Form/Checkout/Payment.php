@@ -685,27 +685,36 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 
   function setDefaultValues()
   {
+	require_once 'CRM/Core/Config.php';
+	require_once 'CRM/Contact/BAO/Contact.php';
+	require_once 'CRM/Event/BAO/MerParticipant.php';
+
 	$defaults = array( );
 	$defaults = parent::setDefaultValues();
-	$contactID = parent::getContactID();
 	$defaults['billing_first_name'] = $defaults['first_name'];
 	$defaults['billing_middle_name'] = $defaults['billing_middle_name']; 
 	$defaults['billing_last_name'] = $defaults['last_name'];
-	foreach ($defaults as $default_name => $default_value) {
-	  if ($default_name == 'address') {
-		foreach($default_value as $value_array) {
-		  if ($value_array['is_billing']) {
-			$defaults['billing_street_address-'] = $value_array['street_address'];
-			$defaults['billing_city-'] = $value_array['city'];
-			$defaults['billing_postal_code-'] = $value_array['postal_code'];
-			$defaults['billing_state_province_id-'] = $value_array['state_province_id'];
-			$defaults['billing_country_id-'] = $value_array['country_id'];
-		  }
-		}
-	  }
+
+        $params = array( 'id' => parent::getContactID() );
+        $contact = CRM_Contact_BAO_Contact::retrieve( $params, $defaults );
+
+	$billing_address = CRM_Event_BAO_MerParticipant::billing_address_from_contact($contact);
+
+	if ($billing_address != null) {
+	    $defaults['billing_street_address-'] = $billing_address['street_address'];
+	    $defaults['billing_city-'] = $billing_address['city'];
+	    $defaults['billing_postal_code-'] = $billing_address['postal_code'];
+	    $defaults['billing_state_province_id-'] = $billing_address['state_province_id'];
+	    $defaults['billing_country_id-'] = $billing_address['country_id'];
+	} else {
+	    $config = CRM_Core_Config::singleton();
+	    $default_country = new CRM_Core_DAO_Country();
+	    $default_country->iso_code = $config->defaultContactCountry();
+	    $default_country->find(true);
+	    $defaults['billing_country_id-'] = $default_country->id;
 	}
 	return $defaults;
-  }
+      }
   
   /** 
    * Calculate discount code amounts to apply
