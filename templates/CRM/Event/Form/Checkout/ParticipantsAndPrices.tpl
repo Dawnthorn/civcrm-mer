@@ -31,6 +31,7 @@
   </fieldset>
 {/foreach}
 <p>{$form.discountcode.label}: {$form.discountcode.html}</p>
+<p>If you have a certificate or coupon for one free workshop, please fill out a <a href="/sites/default/files/docs/Paperreg.pdf">paper registration form</a> and fax it with your certificate or code to 415-541-7708.</p>
 <div id="crm-submit-buttons" class="crm-submit-buttons">
   {include file="CRM/common/formButtons.tpl" location="bottom"}
 </div>
