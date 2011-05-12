@@ -573,8 +573,8 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  $this->emailReceipt( $contact_id, $this->events_in_carts, $trxn, $params );
 	}
 	$this->set( 'last_event_cart_id', $this->cart->id );
-#	$this->cart->completed = true;
-#	$this->cart->save( );
+	$this->cart->completed = true;
+	$this->cart->save( );
 	$participant_values = $this->getValuesForPage( 'ParticipantsAndPrices' ); 
 	$index = 0;
 	$participant_ids = array( );
