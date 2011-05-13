@@ -585,9 +585,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	}
 	foreach ( $this->cart->events_in_carts as $event_in_cart ) {
 	  foreach ( $event_in_cart->participants as $mer_participant ) {
-		if ( $mer_participant->must_wait ) {
-		  continue;
-		}
 		$is_voucher = ($params['amount'] == 0);
 		$index += 1;
 		$params['amount'] = 0;
@@ -595,6 +592,15 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$params['contributionTypeID'] = null;
 		$params['receive_date'] =  null;
 		$params['trxn_id'] = null;
+		$params['status_id'] = ($mer_participant->must_wait ? 7 /*TODO*/ : 1);
+
+		if ($mer_participant->must_wait) {
+		    $participant = $this->addParticipant( $params, $mer_participant, $event_in_cart->event );
+		    $participant_ids[] = $participant->id;
+		    $this->emailParticipant( $contact_id, $event_in_cart, $participant, $mer_participant );
+		    continue;
+		}
+
 		$params['amount'] = $mer_participant->cost - $mer_participant->discount_amount;
 		$sub_trxn_id = "$trxn_id-$index";
 		$payment_instrument_id = 1;
@@ -720,6 +726,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
    * Calculate discount code amounts to apply
    */
   function get_discount_amount($code,$eventID,$price,$priceSetID) {
+//TODO stuff cid into new custom discount_id field
     $discount = array();
 	$query = "SELECT cid, code, description, amount, amount_type, events, pricesets, memberships, organization, autodiscount, count_use, count_max, expiration FROM {civievent_discount} WHERE code = '".stripslashes($code)."'";
 	$result = db_query($query);
