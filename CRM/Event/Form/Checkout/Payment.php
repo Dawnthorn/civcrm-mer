@@ -217,6 +217,8 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 			$this->discounts[] = array(
 			  'amount' => $discount['amount'],
 			  'title' => $discount['type'].' discount ('.$this->discount_code.') for ' . $participant_name . ' (' . $mer_participant->email . ')',
+			  'cid' => $discount['cid'],
+			  'contact_id' => $mer_participant->contact_id,
 			);
 			$this->discount_code_uses++;
 		  }
@@ -237,7 +239,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  
 	  $this->sub_total += $amount;
 	}
-	/* apply discounts */
 	foreach ($mer_participants_by_email as $participant_email => $mer_participants) {
 	  // auto discount
 	  if ( count( $mer_participants ) >= 3 )
@@ -256,9 +257,12 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$this->discounts[] = array(
 		  'amount' => $total_discount_for_participant,
 		  'title' => '20% discount for ' . $participant_name . ' (' . $participant_email . ')',
+		  'contact_id' => $mer_participant->contact_id,
+		  //TODO 'cid' => AUTO_DISCOUNT_CID,
 		);
 	  }
 	}
+	/* apply discounts */
 	$this->total = $this->sub_total - $this->discount_amount_total;
 	if ($this->total > 0) {
 	  $this->payment_required = true;
@@ -726,7 +730,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
    * Calculate discount code amounts to apply
    */
   function get_discount_amount($code,$eventID,$price,$priceSetID) {
-//TODO stuff cid into new custom discount_id field
     $discount = array();
 	$query = "SELECT cid, code, description, amount, amount_type, events, pricesets, memberships, organization, autodiscount, count_use, count_max, expiration FROM {civievent_discount} WHERE code = '".stripslashes($code)."'";
 	$result = db_query($query);
@@ -737,6 +740,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
     }
     $events = unserialize($row['events']); 
     $priceSets = unserialize($row['pricesets']);
+    $discount['cid'] = $row['cid'];
 	if (intval($row['expiration']) > 0 && (time() > strtotime($row['expiration']))) {
 	  $errors['discountcode'] = ts('Code has expired.');
 	} else if ($row["count_max"] > 0 && $row['count_use'] && ($row['count_use'] + $this->discount_code_uses >= $row["count_max"])) {
@@ -762,7 +766,16 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
   
   function redeem_discount()
   {
-    $query = "UPDATE {civievent_discount} SET count_use = count_use + ".addslashes($this->discount_code_uses)." WHERE code = '".addslashes($this->discount_code)."' LIMIT 1;";
-    db_query($query);
+    foreach ($this->discounts as $discount) {
+	civievent_discount_increment_counter($discount['cid']);
+	$track = array(
+	    'contact_id' => $discount['contact_id'], //TODO contact may not have been created yet
+	    'cid' => $discount['cid'],
+	    'amount' => $discount['amount'],
+	    'type' => 'Event',
+	    'description' => $discount['title'],
+	);
+	civievent_discount_set_tracking($track);
+    }
   }
 }
