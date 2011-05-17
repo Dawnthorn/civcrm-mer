@@ -167,6 +167,8 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 
   function buildQuickForm( )
   {
+	require_once 'CRM/Core/BAO/CustomValueTable.php';
+
 	$this->line_items = array();
 	$this->sub_total = 0;
 	$mer_participants_by_email = array();
@@ -195,11 +197,19 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$cost = $event_price_values['amount'];
 		$amount_level = $event_price_values['amount_level'];
 	  }
+	  $custom_field_name = 'custom_38';
+	  $custom_field_params = array(
+	    'entityID' => $event_in_cart->event_id,
+	    $custom_field_name => 1
+	  );
+	  $values = CRM_Core_BAO_CustomValueTable::getValues($custom_field_params);
+	  $eligible_for_20_discount = $values[$custom_field_name];
 	  
 	  // iterate over each paticipant in event
 	  foreach ($event_in_cart->participants as $mer_participant) {
 		$mer_participant->cost = $cost;
 		$mer_participant->fee_level = $amount_level;
+		$mer_participant->eligible_for_20_discount = $eligible_for_20_discount;
 		if ( !$mer_participant->must_wait ) {
 		  if ( !array_key_exists( $mer_participant->email, $mer_participants_by_email ) )
 		  {
@@ -247,6 +257,8 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$total_discount_for_participant = 0;
 		foreach ( $mer_participants as $mer_participant )
 		{
+		  if (!$mer_participant->eligible_for_20_discount)
+		    continue;
 		  $orig_cost = $mer_participant->cost;
 		  $mer_participant->discount_amount += round($mer_participant->cost * 0.20, 2);
 		  $mer_participant->used_discount = true;
@@ -737,10 +749,10 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	
     if (!$row) {
       $errors['discountcode'] = ts('Discount code is invalid.');
-    }
-    $events = unserialize($row['events']); 
-    $priceSets = unserialize($row['pricesets']);
-    $discount['cid'] = $row['cid'];
+    } else {
+	$events = unserialize($row['events']); 
+	$priceSets = unserialize($row['pricesets']);
+	$discount['cid'] = $row['cid'];
 	if (intval($row['expiration']) > 0 && (time() > strtotime($row['expiration']))) {
 	  $errors['discountcode'] = ts('Code has expired.');
 	} else if ($row["count_max"] > 0 && $row['count_use'] && ($row['count_use'] + $this->discount_code_uses >= $row["count_max"])) {
@@ -761,6 +773,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$discount['type'] = '$'.$row['amount'];
 	  }
 	}
+    }
     return $discount;
   }
   

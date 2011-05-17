@@ -14,6 +14,7 @@ class CRM_Event_BAO_MerParticipant
   public $must_wait = false;
   public $used_coupon = false;
   public $used_discount = false;
+  public $eligible_for_20_discount = true;
 
   function email_field_name( $event_in_cart )
   {
