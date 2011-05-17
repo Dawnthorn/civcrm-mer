@@ -209,13 +209,14 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 	  foreach ($event_in_cart->participants as $mer_participant) {
 		$mer_participant->cost = $cost;
 		$mer_participant->fee_level = $amount_level;
-		$mer_participant->eligible_for_20_discount = $eligible_for_20_discount;
 		if ( !$mer_participant->must_wait ) {
-		  if ( !array_key_exists( $mer_participant->email, $mer_participants_by_email ) )
-		  {
-			$mer_pariticpants_by_email[$mer_participant->email] = array( );
+		  if ($eligible_for_20_discount) {
+		      if ( !array_key_exists( $mer_participant->email, $mer_participants_by_email ) )
+		      {
+			    $mer_pariticpants_by_email[$mer_participant->email] = array( );
+		      }
+		      $mer_participants_by_email[$mer_participant->email][] = $mer_participant;
 		  }
-		  $mer_participants_by_email[$mer_participant->email][] = $mer_participant;
 		  // discount validation and application
 		  $event_id = $price_values["event_id"];
 		  $discount = $this->get_discount_amount($this->discount_code,$event_in_cart->event_id,$mer_participant->cost,$price_set_index);
@@ -257,8 +258,6 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$total_discount_for_participant = 0;
 		foreach ( $mer_participants as $mer_participant )
 		{
-		  if (!$mer_participant->eligible_for_20_discount)
-		    continue;
 		  $orig_cost = $mer_participant->cost;
 		  $mer_participant->discount_amount += round($mer_participant->cost * 0.20, 2);
 		  $mer_participant->used_discount = true;
