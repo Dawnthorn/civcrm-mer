@@ -197,7 +197,7 @@ class CRM_Event_Form_Checkout_Payment extends CRM_Event_Form_Checkout
 		$cost = $event_price_values['amount'];
 		$amount_level = $event_price_values['amount_level'];
 	  }
-	  $custom_field_name = 'custom_38';
+	  $custom_field_name = 'custom_46';
 	  $custom_field_params = array(
 	    'entityID' => $event_in_cart->event_id,
 	    $custom_field_name => 1
